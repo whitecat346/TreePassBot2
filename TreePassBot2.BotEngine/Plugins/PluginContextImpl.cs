@@ -35,7 +35,7 @@ public class PluginContextImpl : IPluginContext
     }
 
     /// <inheritdoc />
-    public IBotApi BotApi { get; }
+    public IBotApi BotApi => _botApi;
 
     /// <inheritdoc />
     public IPluginStateStorage State { get; }

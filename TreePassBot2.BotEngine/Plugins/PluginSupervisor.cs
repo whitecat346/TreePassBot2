@@ -7,7 +7,7 @@ namespace TreePassBot2.BotEngine.Plugins;
 public class PluginSupervisor(
     IBotPlugin plugin,
     PluginLoadContext loadCtx,
-    ILogger<PluginSupervisor> logger)
+    ILogger logger)
 {
     private int _errorCount = 0;
     private const int MaxErrors = 5;
