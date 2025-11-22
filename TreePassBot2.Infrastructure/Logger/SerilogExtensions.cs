@@ -9,7 +9,7 @@ public static class SerilogExtensions
 {
     public static void ConfigureSmartLogger(this IHostApplicationBuilder builder)
     {
-        builder.Services.AddSerilog(((provider, configuration) =>
+        builder.Services.AddSerilog((provider, configuration) =>
         {
             configuration.ReadFrom.Configuration(builder.Configuration);
 
@@ -29,7 +29,8 @@ public static class SerilogExtensions
             }
 
             configuration.Enrich.FromLogContext();
+
             configuration.Enrich.WithMachineName();
-        }));
+        });
     }
 }
