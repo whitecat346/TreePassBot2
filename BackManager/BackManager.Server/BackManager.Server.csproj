@@ -8,7 +8,7 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..</DockerfileContext>
 	  <SpaRoot>..\backmanager.client\</SpaRoot>
-	  <SpaProxyServerUrl>http://localhost:5200</SpaProxyServerUrl>
+	  <SpaProxyServerUrl>https://localhost:5201</SpaProxyServerUrl>
 	  <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
   </PropertyGroup>
 

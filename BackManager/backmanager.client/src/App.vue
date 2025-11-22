@@ -1,19 +1,14 @@
-<script setup>
+<script setup lang="ts">
 import Sidebar from './components/Sidebar.vue';
 import Header from './components/Header.vue';
 </script>
 
 <template>
-  <div class="flex h-screen bg-gray-50 font-sans text-gray-900">
-    <!-- 左侧导航栏 -->
+  <div class="flex h-screen bg-gray-50 font-sans text-gray-900 overflow-hidden">
     <Sidebar />
-
-    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
-      <!-- 顶部栏 -->
+    <div class="flex-1 flex flex-col min-w-0">
       <Header />
-
-      <!-- 主内容区域 -->
-      <main class="flex-1 overflow-auto p-6">
+      <main class="flex-1 overflow-auto p-6 relative">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <component :is="Component" />
@@ -25,12 +20,10 @@ import Header from './components/Header.vue';
 </template>
 
 <style>
-.fade-enter-active,
-.fade-leave-active {
+.fade-enter-active, .fade-leave-active {
   transition: opacity 0.15s ease;
 }
-.fade-enter-from,
-.fade-leave-to {
+.fade-enter-from, .fade-leave-to {
   opacity: 0;
 }
 </style>

@@ -1,4 +1,7 @@
-<script setup>
+<script setup lang="ts">
+defineOptions({
+  name: 'DashboardView'
+});
 import { Users, MessageSquare, ShieldAlert, Cpu } from 'lucide-vue-next';
 
 const stats = [
