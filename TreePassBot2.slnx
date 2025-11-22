@@ -1,0 +1,10 @@
+<Solution>
+  <Project Path="TreePassBot2.AppHost/TreePassBot2.AppHost.csproj" />
+  <Project Path="TreePassBot2.BotEngine/TreePassBot2.BotEngine.csproj" />
+  <Project Path="TreePassBot2.Core/TreePassBot2.Core.csproj" />
+  <Project Path="TreePassBot2.Data/TreePassBot2.Data.csproj" />
+  <Project Path="TreePassBot2.Infrastructure/TreePassBot2.Infrastructure.csproj" />
+  <Project Path="TreePassBot2.PluginSdk/TreePassBot2.PluginSdk.csproj" />
+  <Project Path="TreePassBot2.ServiceDefaults/TreePassBot2.ServiceDefaults.csproj" />
+  <Project Path="TreePassBot2/TreePassBot2.csproj" />
+</Solution>
