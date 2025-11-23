@@ -9,6 +9,9 @@ public class PluginManager(IServiceProvider services, ILogger<PluginManager> log
 {
     private readonly Dictionary<string, PluginSupervisor> _activePlugins = [];
 
+    /// <summary>
+    /// Load a plugin from plugin file path.
+    /// </summary>
     /// <exception cref="InvalidOperationException">Cannot load this dll that not implemnet IBotPlugin interface.</exception>
     /// <exception cref="FailedToActivatePluginException">Throws if failed to activate a plugin.</exception>
     public async Task LoadPluginAsync(string dllPath)
@@ -24,9 +27,7 @@ public class PluginManager(IServiceProvider services, ILogger<PluginManager> log
             throw new InvalidOperationException("Cannot load this dll that not implemnet IBotPlugin interface.");
         }
 
-        var pluginInstance = Activator.CreateInstance(pluginType) as IBotPlugin;
-
-        if (pluginInstance == null)
+        if (Activator.CreateInstance(pluginType) is not IBotPlugin pluginInstance)
         {
             throw new FailedToActivatePluginException($"Fialed to activate plugin: {pluginType}");
         }
@@ -41,6 +42,11 @@ public class PluginManager(IServiceProvider services, ILogger<PluginManager> log
         logger.LogInformation("Have loadded plugin: {Name}", pluginInstance.Meta.Name);
     }
 
+    /// <summary>
+    /// Dispatch command to appropriate plugin.
+    /// </summary>
+    /// <param name="cmdTrigger">Matched command.</param>
+    /// <param name="msgCtx">Message context.</param>
     public async Task DispatchCommandAsync(string cmdTrigger, ICommandContext msgCtx)
     {
         foreach (var supervisor in _activePlugins.Values)

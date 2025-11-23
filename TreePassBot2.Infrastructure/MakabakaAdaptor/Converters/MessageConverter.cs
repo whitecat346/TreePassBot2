@@ -91,7 +91,6 @@ public static class MessageConverter
                 return new TextSegment(textSegment.Data.Text);
 
             case Makabaka.Messages.AtSegment atSegment:
-                // 将QQ字符串转换为ulong，all表示全体成员
                 ulong userId = 0;
                 if (atSegment.Data.QQ != "all")
                 {
@@ -112,7 +111,6 @@ public static class MessageConverter
                 return new ImageSegment(imageSegment.Data.File);
 
             case Makabaka.Messages.ReplySegment replySegment:
-                // 将string类型的Id转换为long
                 if (long.TryParse(replySegment.Data.Id, out var messageId))
                 {
                     return new ReplySegment(messageId);
@@ -121,7 +119,6 @@ public static class MessageConverter
                 return null;
 
             case Makabaka.Messages.PokeSegment pokeSegment:
-                // PokeData没有QQ属性，这里使用默认值0
                 return new PokeSegment(0, pokeSegment.Data.Type, pokeSegment.Data.Id);
 
             case Makabaka.Messages.ForwardSegment forwardSegment:

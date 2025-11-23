@@ -10,5 +10,9 @@ public interface IBotCommand
     CommandScope Scope { get; }
     UserRole MinRole { get; }
 
+    /// <summary>
+    /// Execute command logic.
+    /// </summary>
+    /// <param name="ctx">Command context.</param>
     Task ExecuteAsync(ICommandContext ctx);
 }

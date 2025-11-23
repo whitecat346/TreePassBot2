@@ -16,6 +16,9 @@ public class PluginSupervisor(
     public PluginMeta Meta => plugin.Meta;
     public bool IsAlive { get; private set; } = true;
 
+    /// <summary>
+    /// Execute plugin command safely.
+    /// </summary>
     public async Task SafeExecuteCommandAsync(IBotCommand cmd, ICommandContext ctx)
     {
         if (!IsAlive)
@@ -39,7 +42,6 @@ public class PluginSupervisor(
         logger.LogError(ex, "Plugin {Plugin} occurred a/an exception: {Action}. Current error count: {Count}",
                         Meta.Name, action, _errorCount);
 
-        // 触发熔断/卸载机制
         if (_errorCount >= MaxErrors)
         {
             logger.LogCritical("Plugin {Plugin} occurred too many error, unloading...", Meta.Name);
@@ -48,6 +50,9 @@ public class PluginSupervisor(
         }
     }
 
+    /// <summary>
+    /// Unload loaded plugin.
+    /// </summary>
     public async Task UnloadAsync()
     {
         try

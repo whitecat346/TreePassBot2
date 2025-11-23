@@ -10,4 +10,8 @@
     <PackageReference Include="Serilog" Version="4.3.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\TreePassBot2.Infrastructure\TreePassBot2.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -7,6 +7,9 @@ namespace TreePassBot2.Infrastructure.Logger;
 
 public static class SerilogExtensions
 {
+    /// <summary>
+    /// Add database logging using Serilog.
+    /// </summary>
     public static void ConfigureSmartLogger(this IHostApplicationBuilder builder)
     {
         builder.Services.AddSerilog((provider, configuration) =>

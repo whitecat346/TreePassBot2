@@ -1,3 +1,5 @@
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
+
 namespace TreePassBot2.Infrastructure.MakabakaAdaptor;
 
 /// <summary>

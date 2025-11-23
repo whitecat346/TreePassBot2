@@ -11,15 +11,13 @@ public static class LogColumnMap
         {
             { "timestamp", new TimestampColumnWriter(NpgsqlDbType.TimestampTz) },
             { "level", new LevelColumnWriter(true, NpgsqlDbType.Text) },
-            { "message", new RenderedMessageColumnWriter(NpgsqlDbType.Text) },
-            { "message_template", new MessageTemplateColumnWriter(NpgsqlDbType.Text) },
-            { "exception", new ExceptionColumnWriter(NpgsqlDbType.Text) },
-            // 核心改进：将上下文属性存为 JSONB，这允许你查询特定用户的操作日志
-            { "properties", new LogEventSerializedColumnWriter(NpgsqlDbType.Jsonb) },
-            // 记录机器名，方便Docker多实例排查
+            { "message", new RenderedMessageColumnWriter() },
+            { "message_template", new MessageTemplateColumnWriter() },
+            { "exception", new ExceptionColumnWriter() },
+            { "properties", new LogEventSerializedColumnWriter() },
             {
                 "machine_name",
-                new SinglePropertyColumnWriter("MachineName", PropertyWriteMethod.Raw, NpgsqlDbType.Text)
+                new SinglePropertyColumnWriter("MachineName", PropertyWriteMethod.Raw)
             }
         };
     }

@@ -8,7 +8,7 @@ public class ReplySegment : MessageSegment
     /// <summary>
     /// 要回复的消息ID
     /// </summary>
-    public long MessageId { get; set; }
+    public long MessageId { get; }
 
     /// <summary>
     /// 消息段类型

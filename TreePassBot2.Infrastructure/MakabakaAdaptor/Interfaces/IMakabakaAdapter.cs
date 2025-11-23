@@ -1,4 +1,6 @@
-namespace TreePassBot2.Infrastructure.MakabakaAdaptor;
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
+
+namespace TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 
 /// <summary>
 /// Makabaka适配器接口

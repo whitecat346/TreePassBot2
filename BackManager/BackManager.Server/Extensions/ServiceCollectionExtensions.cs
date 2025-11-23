@@ -1,7 +1,7 @@
 using Makabaka;
 using Microsoft.EntityFrameworkCore;
-using TreePassBot2.Core.Interfaces;
 using TreePassBot2.Data;
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 using TreePassBot2.Infrastructure.Services;
 
 namespace TreePassBot2.Extensions;
@@ -27,7 +27,7 @@ public static class ServiceCollectionExtensions
             }
         );
 
-        services.AddSingleton<IMessageSender, MakabakaSender>();
+        services.AddSingleton<ITreePassBotCommunicationService, MakabakaService>();
 
         return services;
     }

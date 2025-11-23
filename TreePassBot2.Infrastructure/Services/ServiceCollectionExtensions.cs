@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
+using TreePassBot2.Infrastructure.MakabakaAdaptor;
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 
-namespace TreePassBot2.Infrastructure.MakabakaAdaptor;
+namespace TreePassBot2.Infrastructure.Services;
 
 /// <summary>
 /// 服务集合扩展类
@@ -12,12 +14,12 @@ public static class ServiceCollectionExtensions
     /// </summary>
     /// <param name="services">服务集合</param>
     /// <returns>服务集合</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/></exception>
     public static IServiceCollection AddMakabakaAdapter(this IServiceCollection services)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
 
-        // 注册适配器接口和实现类
         services.AddSingleton<IMakabakaAdapter, MakabakaAdapter>();
 
         return services;
@@ -28,12 +30,12 @@ public static class ServiceCollectionExtensions
     /// </summary>
     /// <param name="services">服务集合</param>
     /// <returns>服务集合</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/></exception>
     public static IServiceCollection AddTreePassBotMakabakaService(this IServiceCollection services)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
 
-        // 注册TreePassBot通信服务为单例服务
         services.AddSingleton<ITreePassBotCommunicationService, MakabakaService>();
 
         return services;

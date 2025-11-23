@@ -1,6 +1,6 @@
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
 
-namespace TreePassBot2.Infrastructure.MakabakaAdaptor;
+namespace TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 
 /// <summary>
 /// TreePassBot通信服务接口
@@ -29,7 +29,7 @@ public interface ITreePassBotCommunicationService
     /// <param name="groupId">群号</param>
     /// <param name="messageBuilder">消息构建器</param>
     /// <returns>任务</returns>
-    Task SendGroupMessageAsync(ulong groupId, Models.MessageBuilder messageBuilder);
+    Task SendGroupMessageAsync(ulong groupId, MessageBuilder messageBuilder);
 
     /// <summary>
     /// 发送私聊消息（使用消息构建器）
@@ -37,7 +37,7 @@ public interface ITreePassBotCommunicationService
     /// <param name="userId">用户ID</param>
     /// <param name="messageBuilder">消息构建器</param>
     /// <returns>任务</returns>
-    Task SendPrivateMessageAsync(ulong userId, Models.MessageBuilder messageBuilder);
+    Task SendPrivateMessageAsync(ulong userId, MessageBuilder messageBuilder);
 
     /// <summary>
     /// 获取合并转发消息内容

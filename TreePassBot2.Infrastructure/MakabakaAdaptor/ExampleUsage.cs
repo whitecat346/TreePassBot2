@@ -1,3 +1,6 @@
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
+
 namespace TreePassBot2.Infrastructure.MakabakaAdaptor;
 
 /// <summary>
@@ -21,13 +24,11 @@ public class ExampleUsage
     /// </summary>
     public async Task SendSimpleMessageAsync()
     {
-        // 发送群消息
         var groupMessageBuilder = new MessageBuilder().AddText("这是一条简单的群消息");
-        await _adapter.SendGroupMessageAsync(123456789, groupMessageBuilder);
+        await _adapter.SendGroupMessageAsync(123456789, groupMessageBuilder).ConfigureAwait(false);
 
-        // 发送私聊消息
         var privateMessageBuilder = new MessageBuilder().AddText("这是一条简单的私聊消息");
-        await _adapter.SendPrivateMessageAsync(987654321, privateMessageBuilder);
+        await _adapter.SendPrivateMessageAsync(987654321, privateMessageBuilder).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -45,7 +46,7 @@ public class ExampleUsage
                                  .AddText("\n这是一个表情:")
                                  .AddFace(1); // 表情ID
 
-        await _adapter.SendGroupMessageAsync(123456789, groupMessageBuilder);
+        await _adapter.SendGroupMessageAsync(123456789, groupMessageBuilder).ConfigureAwait(false);
 
         // 构建复杂的私聊消息
         var privateMessageBuilder = new MessageBuilder()
@@ -53,18 +54,18 @@ public class ExampleUsage
                                    .AddText("\n这是一条带表情的消息:")
                                    .AddFace(2); // 表情ID
 
-        await _adapter.SendPrivateMessageAsync(987654321, privateMessageBuilder);
+        await _adapter.SendPrivateMessageAsync(987654321, privateMessageBuilder).ConfigureAwait(false);
     }
 
     /// <summary>
     /// 发送回复消息
     /// </summary>
-    public async Task SendReplyMessageAsync(long messageId)
+    public Task SendReplyMessageAsync(long messageId)
     {
         var messageBuilder = new MessageBuilder()
                             .AddReply(messageId) // 回复指定消息
                             .AddText("这是一条回复消息");
 
-        await _adapter.SendGroupMessageAsync(123456789, messageBuilder);
+        return _adapter.SendGroupMessageAsync(123456789, messageBuilder);
     }
 }
