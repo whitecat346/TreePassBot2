@@ -1,4 +1,5 @@
-﻿using Makabaka.Events;
+﻿using Makabaka;
+using Makabaka.Events;
 using Makabaka.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -9,7 +10,6 @@ using TreePassBot2.Core.Entities;
 using TreePassBot2.Core.Options;
 using TreePassBot2.Infrastructure.MakabakaAdaptor;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Converters;
-using TreePassBot2.Infrastructure.Services;
 
 namespace TreePassBot2.BotEngine.Message;
 
@@ -22,7 +22,7 @@ public class BotEventRouter
 
     public BotEventRouter(
         ILogger<BotEventRouter> logger,
-        MakabakaService makabaka,
+        IBotContext makabaka,
         MessageRouter router,
         IServiceProvider serviceProvider,
         IOptions<BotOptions> config)
@@ -32,16 +32,16 @@ public class BotEventRouter
         _serviceProvider = serviceProvider;
         _config = config.Value;
 
-        makabaka.BotContext.OnGroupMessage += BotContextOnOnGroupMessageAsync;
+        makabaka.OnGroupMessage += BotContextOnOnGroupMessageAsync;
 
-        makabaka.BotContext.OnGroupMemberIncrease += BotContextOnOnGroupMemberIncreaseAsync;
-        makabaka.BotContext.OnGroupMemberDecrease += BotContextOnOnGroupMemberDecreaseAsync;
+        makabaka.OnGroupMemberIncrease += BotContextOnOnGroupMemberIncreaseAsync;
+        makabaka.OnGroupMemberDecrease += BotContextOnOnGroupMemberDecreaseAsync;
 
-        makabaka.BotContext.OnGroupAddRequest += BotContextOnOnGroupAddRequestAsync;
+        makabaka.OnGroupAddRequest += BotContextOnOnGroupAddRequestAsync;
 
-        makabaka.BotContext.OnGroupMemberMute += BotContextOnOnGroupMemberMuteAsync;
+        makabaka.OnGroupMemberMute += BotContextOnOnGroupMemberMuteAsync;
 
-        makabaka.BotContext.OnGroupMessageWithdraw += BotContextOnOnGroupMessageWithdrawAsync;
+        makabaka.OnGroupMessageWithdraw += BotContextOnOnGroupMessageWithdrawAsync;
     }
 
     private Task BotContextOnOnGroupMessageWithdrawAsync(object _, GroupMessageWithdrawEventArgs e)

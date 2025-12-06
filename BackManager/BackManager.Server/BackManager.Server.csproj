@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -8,8 +8,11 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..</DockerfileContext>
 	  <SpaRoot>..\backmanager.client\</SpaRoot>
-	  <SpaProxyServerUrl>https://localhost:5201</SpaProxyServerUrl>
-	  <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
+    <!-- SpaProxy Configuration -->
+	  <SpaProxyServerUrl Condition=" '$(SpaProxyServerUrl)' == '' ">https://localhost:5201</SpaProxyServerUrl>
+	  <SpaProxyLaunchCommand Condition=" '$(SpaProxyLaunchCommand)' == '' ">npm run dev</SpaProxyLaunchCommand>
+    <!-- Enable SpaProxy in development environment -->
+    <SpaProxyEnabled>$(ASPNETCORE_ENVIRONMENT) == Development</SpaProxyEnabled>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,6 +33,7 @@
     <ProjectReference Include="..\..\TreePassBot2.Core\TreePassBot2.Core.csproj" />
     <ProjectReference Include="..\..\TreePassBot2.Data\TreePassBot2.Data.csproj" />
     <ProjectReference Include="..\..\TreePassBot2.Infrastructure\TreePassBot2.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\TreePassBot2.PluginSdk\TreePassBot2.PluginSdk.csproj" />
     <ProjectReference Include="..\..\TreePassBot2.ServiceDefaults\TreePassBot2.ServiceDefaults.csproj" />
     <ProjectReference Include="..\backmanager.client\backmanager.client.esproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
