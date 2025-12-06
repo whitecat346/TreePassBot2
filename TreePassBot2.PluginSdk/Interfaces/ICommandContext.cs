@@ -13,5 +13,5 @@ public interface ICommandContext
     string[] Args { get; }
 
     Task ReplyAsync(Message msg);
-    Task ReplyAsync(MessageBuilder msg);
+    Task ReplyAsync(MessageBuilder msgBuilder);
 }

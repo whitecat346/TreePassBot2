@@ -11,7 +11,7 @@ namespace TreePassBot2.Infrastructure.Services;
 /// <summary>
 /// Makabaka通信服务实现
 /// </summary>
-public class MakabakaService : ITreePassBotCommunicationService
+public class MakabakaService : ICommunicationService
 {
     public IBotContext BotContext { get; }
 

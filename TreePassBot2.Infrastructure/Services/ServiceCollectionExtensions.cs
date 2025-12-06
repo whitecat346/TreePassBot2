@@ -36,7 +36,7 @@ public static class ServiceCollectionExtensions
         if (services == null)
             throw new ArgumentNullException(nameof(services));
 
-        services.AddSingleton<ITreePassBotCommunicationService, MakabakaService>();
+        services.AddSingleton<ICommunicationService, MakabakaService>();
 
         return services;
     }

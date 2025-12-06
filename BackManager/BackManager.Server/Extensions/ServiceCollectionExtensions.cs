@@ -27,7 +27,7 @@ public static class ServiceCollectionExtensions
             }
         );
 
-        services.AddSingleton<ITreePassBotCommunicationService, MakabakaService>();
+        services.AddSingleton<ICommunicationService, MakabakaService>();
 
         return services;
     }

@@ -7,13 +7,13 @@ namespace TreePassBot2.Infrastructure.MakabakaAdaptor;
 /// </summary>
 public class TreePassBotExample
 {
-    private readonly ITreePassBotCommunicationService _communicationService;
+    private readonly ICommunicationService _communicationService;
 
     /// <summary>
     /// 构造函数
     /// </summary>
     /// <param name="communicationService">通信服务</param>
-    public TreePassBotExample(ITreePassBotCommunicationService communicationService)
+    public TreePassBotExample(ICommunicationService communicationService)
     {
         _communicationService = communicationService;
     }

@@ -8,7 +8,7 @@ public enum UserRole
     /// <summary>
     /// Normal user.
     /// </summary>
-    User = 0,
+    Member = 0,
 
     /// <summary>
     /// User with auditing permissions.

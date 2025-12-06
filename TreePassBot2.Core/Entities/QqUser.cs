@@ -26,7 +26,7 @@ public record QqUser
     /// <summary>
     /// The role of the user.
     /// </summary>
-    public UserRole Role { get; set; } = UserRole.User;
+    public UserRole Role { get; set; } = UserRole.Member;
 
     /// <summary>
     /// The last time the user was seen.

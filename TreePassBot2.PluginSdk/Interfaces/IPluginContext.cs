@@ -7,7 +7,7 @@ public interface IPluginContext
 {
     void RegisterCommand(IBotCommand command);
 
-    ITreePassBotCommunicationService BotApi { get; }
+    ICommunicationService BotApi { get; }
     IPluginStateStorage State { get; }
     ILogger Logger { get; }
     IReadOnlyList<IBotCommand> RegisteredCommands { get; }

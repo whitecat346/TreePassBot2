@@ -6,10 +6,11 @@ public record MessageLog
 {
     public long Id { get; set; }
 
-    public int MessageId { get; set; }
+    public long MessageId { get; set; }
 
     public ulong GroupId { get; set; }
     public ulong UserId { get; set; }
+    public string? UserNickName { get; set; }
     public string ContentText { get; set; } = string.Empty;
 
     [Column(TypeName = "jsonb")]

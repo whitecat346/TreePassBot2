@@ -29,7 +29,7 @@ RUN dotnet build "./BackManager.Server.csproj" -c $BUILD_CONFIGURATION -o /app/b
 # 此阶段用于发布要复制到最终阶段的服务项目
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./BackManager.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./BackManager.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false --self-contained
 
 # 此阶段在生产中使用，或在常规模式下从 VS 运行时使用(在不使用调试配置时为默认值)
 FROM base AS final

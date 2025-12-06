@@ -21,7 +21,6 @@ public class BotDbContext(DbContextOptions<BotDbContext> options) : DbContext(op
 
         modelBuilder.Entity<AuditRequestData>()
                     .HasIndex(audit => audit.Passcode);
-
         modelBuilder.Entity<AuditRequestData>()
                     .HasIndex(audit => new
                     {
@@ -31,9 +30,11 @@ public class BotDbContext(DbContextOptions<BotDbContext> options) : DbContext(op
 
         modelBuilder.Entity<MessageLog>()
                     .HasIndex(msg => msg.SendAt);
-
         modelBuilder.Entity<MessageLog>()
                     .HasIndex(msg => new { msg.GroupId, msg.UserId });
+        modelBuilder.Entity<MessageLog>()
+                    .HasIndex(msg => msg.UserNickName)
+                    .HasFilter("UserNickName IS NOT NULL");
 
         modelBuilder.Entity<PluginState>()
                     .HasKey(plg => new

@@ -40,7 +40,7 @@ public class PluginContextImpl : IPluginContext
     }
 
     /// <inheritdoc />
-    public ITreePassBotCommunicationService BotApi => _botApi;
+    public ICommunicationService BotApi => _botApi;
 
     /// <inheritdoc />
     public IPluginStateStorage State { get; }
