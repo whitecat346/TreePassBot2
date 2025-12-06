@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 
 namespace TreePassBot2.PluginSdk.Interfaces;
@@ -8,4 +9,6 @@ public interface IPluginContext
 
     ITreePassBotCommunicationService BotApi { get; }
     IPluginStateStorage State { get; }
+    ILogger Logger { get; }
+    IReadOnlyList<IBotCommand> RegisteredCommands { get; }
 }

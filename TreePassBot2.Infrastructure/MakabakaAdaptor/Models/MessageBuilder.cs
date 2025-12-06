@@ -5,7 +5,7 @@ namespace TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
 /// </summary>
 public class MessageBuilder
 {
-    private readonly List<MessageSegment> _segments = new();
+    private readonly List<MessageSegment> _segments = [];
 
     /// <summary>
     /// 添加文本消息

@@ -27,12 +27,15 @@ public class PluginContextImpl : IPluginContext
         Logger = loggerFactory.CreateLogger($"Plugin.{pluginId}");
     }
 
-    internal List<IBotCommand> RegisteredCommands { get; } = [];
+    private readonly List<IBotCommand> _commands = [];
+
+    public IReadOnlyList<IBotCommand> RegisteredCommands => _commands.AsReadOnly();
+
 
     /// <inheritdoc />
     public void RegisterCommand(IBotCommand command)
     {
-        RegisteredCommands.Add(command);
+        _commands.Add(command);
         Logger.LogDebug("Command registered: {Trigger}", command.Trigger);
     }
 

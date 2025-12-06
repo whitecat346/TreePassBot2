@@ -1,18 +1,32 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import Users from '../views/Users.vue';
-import Plugins from '../views/Plugins.vue';
-
-// 简单的 Dashboard 占位
-const Dashboard = { template: '<div class="text-2xl font-bold">Dashboard Component (Pending)</div>' };
+import { createRouter, createWebHistory } from 'vue-router'
+import DashboardView from '../views/DashboardView.vue'
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', component: Dashboard },
-    { path: '/users', component: Users },
-    { path: '/plugins', component: Plugins },
-    // 其他路由...
+    {
+      path: '/',
+      name: 'dashboard',
+      component: DashboardView
+    },
+    {
+      path: '/plugins',
+      name: 'plugins',
+      component: () => import('../views/PluginManagementView.vue')
+    }
+    // {
+    //   path: '/messages',
+    //   name: 'messages',
+    //   // ... 消息查看组件
+    //   component: () => import('../views/MessageView.vue')
+    // },
+    // {
+    //   path: '/audits',
+    //   name: 'audits',
+    //   // ... 审核信息查看组件
+    //   component: () => import('../views/AuditView.vue')
+    // }
   ]
-});
+})
 
-export default router;
+export default router

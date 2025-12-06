@@ -26,7 +26,8 @@ public class PluginStateStorageImpl(
                                                       p.PluginId == pluginId &&
                                                       p.Scope == entityScope &&
                                                       p.GroupId == groupId &&
-                                                      p.UserId == userId).ConfigureAwait(false);
+                                                      p.UserId == userId)
+                             .ConfigureAwait(false);
 
         if (entity == null)
         {
@@ -56,7 +57,8 @@ public class PluginStateStorageImpl(
                                                       p.PluginId == pluginId &&
                                                       p.Scope == eneityScope &&
                                                       p.GroupId == groupId &&
-                                                      p.UserId == userId).ConfigureAwait(false);
+                                                      p.UserId == userId)
+                             .ConfigureAwait(false);
         Dictionary<string, object> dateDict;
 
         if (entity == null)

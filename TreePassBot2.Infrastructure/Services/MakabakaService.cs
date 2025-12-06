@@ -1,3 +1,4 @@
+using Makabaka;
 using Makabaka.Exceptions;
 using TreePassBot2.Infrastructure.Exceptions;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Converters;
@@ -12,7 +13,7 @@ namespace TreePassBot2.Infrastructure.Services;
 /// </summary>
 public class MakabakaService : ITreePassBotCommunicationService
 {
-    private readonly Makabaka.IBotContext _botContext;
+    public IBotContext BotContext { get; }
 
     /// <summary>
     /// 构造函数
@@ -20,7 +21,7 @@ public class MakabakaService : ITreePassBotCommunicationService
     /// <param name="botContext">Makabaka机器人上下文</param>
     public MakabakaService(Makabaka.IBotContext botContext)
     {
-        _botContext = botContext ?? throw new ArgumentNullException(nameof(botContext));
+        BotContext = botContext ?? throw new ArgumentNullException(nameof(botContext));
     }
 
     /// <summary>
@@ -44,7 +45,7 @@ public class MakabakaService : ITreePassBotCommunicationService
             var makabakaMessage = MessageConverter.ConvertToMakabakaMessage(message);
 
             // 发送消息
-            var response = await _botContext.SendGroupMessageAsync(groupId, makabakaMessage).ConfigureAwait(false);
+            var response = await BotContext.SendGroupMessageAsync(groupId, makabakaMessage).ConfigureAwait(false);
 
             // 确保请求成功
             response.EnsureSuccess();
@@ -84,7 +85,7 @@ public class MakabakaService : ITreePassBotCommunicationService
             var makabakaMessage = MessageConverter.ConvertToMakabakaMessage(message);
 
             // 发送消息
-            var response = await _botContext.SendPrivateMessageAsync(userId, makabakaMessage).ConfigureAwait(false);
+            var response = await BotContext.SendPrivateMessageAsync(userId, makabakaMessage).ConfigureAwait(false);
 
             // 确保请求成功
             response.EnsureSuccess();
@@ -157,7 +158,7 @@ public class MakabakaService : ITreePassBotCommunicationService
 
         try
         {
-            var response = await _botContext.GetForwardMessageAsync(forwardId).ConfigureAwait(false);
+            var response = await BotContext.GetForwardMessageAsync(forwardId).ConfigureAwait(false);
 
             response.EnsureSuccess();
 

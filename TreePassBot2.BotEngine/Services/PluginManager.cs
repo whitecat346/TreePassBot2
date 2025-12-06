@@ -1,13 +1,18 @@
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 using TreePassBot2.BotEngine.Plugins;
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
 using TreePassBot2.PluginSdk.Exceptions;
 using TreePassBot2.PluginSdk.Interfaces;
 
 namespace TreePassBot2.BotEngine.Services;
 
-public class PluginManager(IServiceProvider services, ILogger<PluginManager> logger)
+public class PluginManager(IServiceProvider services, ILogger<PluginManager> logger) : IAsyncDisposable
 {
-    private readonly Dictionary<string, PluginSupervisor> _activePlugins = [];
+    private readonly ConcurrentDictionary<string, PluginSupervisor> _activePlugins = [];
+
+    private readonly ConcurrentDictionary<string, (PluginSupervisor Supervisor, IBotCommand Command)>
+        _commandRouteTable = [];
 
     /// <summary>
     /// Load a plugin from plugin file path.
@@ -17,15 +22,10 @@ public class PluginManager(IServiceProvider services, ILogger<PluginManager> log
     public async Task LoadPluginAsync(string dllPath)
     {
         var alc = new PluginLoadContext(dllPath);
-
         var assembly = alc.LoadFromAssemblyPath(dllPath);
-
-        var pluginType = assembly.GetTypes().FirstOrDefault(t => typeof(IBotPlugin).IsAssignableFrom(t));
-
-        if (pluginType == null)
-        {
-            throw new InvalidOperationException("Cannot load this dll that not implemnet IBotPlugin interface.");
-        }
+        var pluginType = assembly.GetTypes().FirstOrDefault(t => typeof(IBotPlugin).IsAssignableFrom(t))
+                      ?? throw new InvalidOperationException(
+                             "Cannot load this dll that not implemnet IBotPlugin interface.");
 
         if (Activator.CreateInstance(pluginType) is not IBotPlugin pluginInstance)
         {
@@ -34,12 +34,72 @@ public class PluginManager(IServiceProvider services, ILogger<PluginManager> log
 
         var context = new PluginContextImpl(pluginInstance.Meta.Id, services);
 
-        await pluginInstance.OnLoadedAsync(context).ConfigureAwait(false);
+        try
+        {
+            await pluginInstance.OnLoadedAsync(context).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Fialed to load plugin {Id}", pluginInstance.Meta.Id);
+            alc.Unload();
+            return;
+        }
 
         var supervisor = new PluginSupervisor(pluginInstance, alc, logger);
-        _activePlugins.Add(pluginInstance.Meta.Id, supervisor);
+        supervisor.OnPluginException += SupervisorOnOnPluginException;
 
-        logger.LogInformation("Have loadded plugin: {Name}", pluginInstance.Meta.Name);
+        _activePlugins[pluginInstance.Meta.Id] = supervisor;
+
+        foreach (var cmd in context.RegisteredCommands)
+        {
+            RegisterRoute(cmd.Trigger, cmd, supervisor);
+
+            foreach (var alias in cmd.Aliases)
+            {
+                RegisterRoute(alias, cmd, supervisor);
+            }
+        }
+
+        logger.LogInformation("Have loaded plugin: {Name}; Registered {Count} commands", pluginInstance.Meta.Name,
+                              context.RegisteredCommands.Count);
+    }
+
+    private void RegisterRoute(string trigger, IBotCommand cmd, PluginSupervisor supervisor)
+    {
+        if (_commandRouteTable.ContainsKey(trigger))
+        {
+            logger.LogWarning("ÃüÁî³åÍ»£º´¥·¢´Ê '{Trigger}' ÒÑ±»ÆäËû²å¼şÕ¼ÓÃ£¬²å¼ş {NewPlugin} µÄ¸ÃÃüÁî½«±»ºöÂÔ¡£",
+                              trigger, supervisor.Meta.Id);
+            return;
+        }
+
+        _commandRouteTable[trigger] = (supervisor, cmd);
+    }
+
+    private void SupervisorOnOnPluginException(string pluginId)
+    {
+        var tk = UnloadPluginAsync(pluginId);
+        Task.WhenAny(tk);
+    }
+
+    private async Task UnloadPluginAsync(string pluginId)
+    {
+        if (_activePlugins.TryRemove(pluginId, out var supervisor))
+        {
+            await supervisor.UnloadAsync().ConfigureAwait(false);
+
+            var keysToRemove = _commandRouteTable
+                              .Where(kvp => kvp.Value.Supervisor == supervisor)
+                              .Select(kvp => kvp.Key)
+                              .ToList();
+
+            foreach (var key in keysToRemove)
+            {
+                _commandRouteTable.TryRemove(key, out _);
+            }
+
+            logger.LogInformation("²å¼ş {Id} ÒÑĞ¶ÔØ²¢ÇåÀíÂ·ÓÉ¡£", pluginId);
+        }
     }
 
     /// <summary>
@@ -49,11 +109,28 @@ public class PluginManager(IServiceProvider services, ILogger<PluginManager> log
     /// <param name="msgCtx">Message context.</param>
     public async Task DispatchCommandAsync(string cmdTrigger, ICommandContext msgCtx)
     {
-        foreach (var supervisor in _activePlugins.Values)
+        if (!_commandRouteTable.TryGetValue(cmdTrigger, out var value))
         {
-            // TODO: impl this
-            // å‡è®¾ PluginContextImpl é‡Œå­˜å‚¨äº†è¯¥æ’ä»¶æ³¨å†Œçš„ commands åˆ—è¡¨
-            // è¿™é‡Œæ‰¾åˆ°åŒ¹é…çš„å‘½ä»¤å¹¶è°ƒç”¨ Supervisor çš„ SafeExecuteCommandAsync
+            var replyMsg = new MessageBuilder().AddText("Î´ÕÒµ½Æ¥ÅäµÄÃüÁî´¦Àí³ÌĞò¡£");
+
+            await msgCtx.ReplyAsync(replyMsg).ConfigureAwait(false);
+            return;
         }
+
+        await value.Supervisor.SafeExecuteCommandAsync(value.Command, msgCtx).ConfigureAwait(false);
+
+        logger.LogTrace("Issued command {CommandName} from {GroupId} by {UserId}",
+                        value.Command.Trigger, msgCtx.GroupId, msgCtx.SenderId);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        foreach (var activePlugin in _activePlugins)
+        {
+            await activePlugin.Value.UnloadAsync().ConfigureAwait(false);
+        }
+
+        GC.SuppressFinalize(this);
     }
 }
