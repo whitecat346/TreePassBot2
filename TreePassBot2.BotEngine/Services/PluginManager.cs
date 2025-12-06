@@ -60,8 +60,8 @@ public class PluginManager(IServiceProvider services, ILogger<PluginManager> log
             }
         }
 
-        logger.LogInformation("Have loaded plugin: {Name}; Registered {Count} commands", pluginInstance.Meta.Name,
-                              context.RegisteredCommands.Count);
+        logger.LogInformation("Have loaded plugin: {Name}; Registered {Count} commands",
+                              pluginInstance.Meta.Name, context.RegisteredCommands.Count);
     }
 
     private void RegisterRoute(string trigger, IBotCommand cmd, PluginSupervisor supervisor)

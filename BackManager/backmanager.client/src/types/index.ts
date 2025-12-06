@@ -48,6 +48,6 @@ export interface AuditRequest {
   targetGroupId: number;
   passcode: string;
   status: AuditStatus;
-  formData: Record<string, any>; // JSONB
+  formData: Record<string, unknown>; // JSONB
   createdAt: string;
 }

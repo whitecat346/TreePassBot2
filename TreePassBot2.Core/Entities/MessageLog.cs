@@ -1,9 +1,10 @@
-using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
 namespace TreePassBot2.Core.Entities;
 
 public record MessageLog
 {
+    [Key]
     public long Id { get; set; }
 
     public long MessageId { get; set; }
@@ -13,9 +14,7 @@ public record MessageLog
     public string? UserNickName { get; set; }
     public string ContentText { get; set; } = string.Empty;
 
-    [Column(TypeName = "jsonb")]
-    public string RawMessageJson { get; set; } = "{}";
-
     public DateTimeOffset SendAt { get; set; } = DateTimeOffset.UtcNow;
-    public bool IsFlagged { get; set; } = false;
+    public bool IsWithdrawed { get; set; } = false;
+    public ulong? WithdrawedBy { get; set; }
 }

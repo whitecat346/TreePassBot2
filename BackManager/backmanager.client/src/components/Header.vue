@@ -3,7 +3,7 @@ defineOptions({
   name: 'HeaderComponent'
 });
 import { ref } from 'vue';
-import { Search, Bell, HelpCircle, ChevronDown } from 'lucide-vue-next';
+import { Search, Bell, ChevronDown } from 'lucide-vue-next';
 
 const searchQuery = ref('');
 </script>

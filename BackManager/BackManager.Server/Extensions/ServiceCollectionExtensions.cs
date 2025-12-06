@@ -1,5 +1,7 @@
 using Makabaka;
 using Microsoft.EntityFrameworkCore;
+using TreePassBot2.BotEngine.Extensions;
+using TreePassBot2.BotEngine.Services;
 using TreePassBot2.Data;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 using TreePassBot2.Infrastructure.Services;
@@ -20,14 +22,17 @@ public static class ServiceCollectionExtensions
         services.AddDbContextPool<BotDbContext>(options =>
                                                     options.UseNpgsql(connString));
 
-        services.AddSingleton<MakabakaApp>(app =>
-            {
-                var builder = new MakabakaAppBuilder();
-                return builder.Build();
-            }
-        );
+        var builder = new MakabakaAppBuilder();
+        var makabakaApp = builder.Build();
+
+        services.AddSingleton<MakabakaApp>(_ => makabakaApp);
+        services.AddSingleton<IBotContext>(_ => makabakaApp.BotContext);
 
         services.AddSingleton<ICommunicationService, MakabakaService>();
+
+        services.AddBotEngineServices();
+
+        services.AddHostedService<BotHost>();
 
         return services;
     }

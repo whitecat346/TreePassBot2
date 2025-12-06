@@ -2,7 +2,7 @@
 defineOptions({
   name: 'SidebarComponent'
 });
-import { computed } from 'vue';
+
 import { useRoute, RouterLink } from 'vue-router';
 import { LayoutDashboard, Users, FileText, Plug, Database } from 'lucide-vue-next';
 

@@ -18,9 +18,7 @@ public class CommandExcuter(
     /// <inheritdoc />
     public Task HandleMessageAsync(MessageEventData data)
     {
-        var firSeg = data.Message[0] as TextSegment;
-
-        if (firSeg == null)
+        if (data.Message[0] is not TextSegment firSeg)
         {
             return Task.CompletedTask;
         }

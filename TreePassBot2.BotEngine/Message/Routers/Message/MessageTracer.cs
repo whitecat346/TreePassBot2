@@ -17,7 +17,8 @@ public class MessageTracer(BotDbContext db) : IMessageHandler
             UserId = data.Sender.Id,
             UserNickName = string.IsNullOrEmpty(data.Sender.NickName) ? null : data.Sender.NickName,
             ContentText = data.Message.ToString(),
-            IsFlagged = false
+            IsWithdrawed = false,
+            WithdrawedBy = null
         };
 
         db.MessageLogs.Add(msgLog);

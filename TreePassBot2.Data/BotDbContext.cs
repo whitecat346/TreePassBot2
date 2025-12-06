@@ -9,6 +9,7 @@ public class BotDbContext(DbContextOptions<BotDbContext> options) : DbContext(op
     public DbSet<AuditRequestData> AuditRequests { get; set; }
     public DbSet<MessageLog> MessageLogs { get; set; }
     public DbSet<PluginState> PluginStates { get; set; }
+    public DbSet<ArchivedMessageLog> ArchivedMessageLogs { get; set; }
 
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -31,8 +32,21 @@ public class BotDbContext(DbContextOptions<BotDbContext> options) : DbContext(op
         modelBuilder.Entity<MessageLog>()
                     .HasIndex(msg => msg.SendAt);
         modelBuilder.Entity<MessageLog>()
-                    .HasIndex(msg => new { msg.GroupId, msg.UserId });
+                    .HasIndex(msg => msg.MessageId);
         modelBuilder.Entity<MessageLog>()
+                    .HasIndex(msg => new
+                    {
+                        msg.GroupId,
+                        msg.UserId,
+                        msg.SendAt
+                    });
+        modelBuilder.Entity<MessageLog>()
+                    .HasIndex(msg => msg.UserNickName)
+                    .HasFilter("UserNickName IS NOT NULL");
+
+        modelBuilder.Entity<ArchivedMessageLog>()
+                    .HasIndex(msg => new { msg.GroupId, msg.UserId });
+        modelBuilder.Entity<ArchivedMessageLog>()
                     .HasIndex(msg => msg.UserNickName)
                     .HasFilter("UserNickName IS NOT NULL");
 

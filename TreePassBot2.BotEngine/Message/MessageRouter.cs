@@ -10,7 +10,7 @@ public class MessageRouter
 {
     private readonly List<IMessageHandler> _handlers;
 
-    private MessageRouter(
+    public MessageRouter(
         IServiceProvider serviceProvider,
         ILogger<MessageRouter> logger)
     {

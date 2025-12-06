@@ -13,6 +13,11 @@ appsettings.json
 # ignore development pgsql docker
 docker-composes/
 
+# Folder Ignore (For some caches and temporary files)
+.trae/
+.vscode/
+.idea/
+
 # User-specific files
 *.rsuser
 *.suo
