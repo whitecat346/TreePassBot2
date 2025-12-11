@@ -1,5 +1,4 @@
-<script setup lang="ts">
-import { ref, computed } from 'vue';
+<script setup lang="ts">import { ref, computed } from 'vue';
 import EmptyState from './EmptyState.vue';
 
 // 泛型数据类型
@@ -90,8 +89,7 @@ const handleSearchKeydown = (event: KeyboardEvent) => {
   if (event.key === 'Enter') {
     handleSearch();
   }
-};
-</script>
+};</script>
 
 <template>
   <div class="base-table-container">
@@ -100,16 +98,12 @@ const handleSearchKeydown = (event: KeyboardEvent) => {
       <h3 v-if="props.title" class="text-lg font-medium text-gray-900">{{ props.title }}</h3>
 
       <div v-if="props.showSearch" class="flex items-center">
-        <input
-          v-model="searchKeyword"
-          @keydown="handleSearchKeydown"
-          placeholder="{{ props.searchPlaceholder }}"
-          class="pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-        />
-        <button
-          @click="handleSearch"
-          class="ml-2 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
+        <input v-model="searchKeyword"
+               @keydown="handleSearchKeydown"
+               placeholder="{{ props.searchPlaceholder }}"
+               class="pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+        <button @click="handleSearch"
+                class="ml-2 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
           搜索
         </button>
       </div>
@@ -117,44 +111,36 @@ const handleSearchKeydown = (event: KeyboardEvent) => {
 
     <!-- 表格 -->
     <div class="overflow-x-auto">
-      <table
-        class="min-w-full divide-y divide-gray-200"
-        :class="{ 'border border-gray-200': props.bordered }"
-      >
+      <table class="min-w-full divide-y divide-gray-200"
+             :class="{ 'border border-gray-200': props.bordered }">
         <!-- 表头 -->
         <thead class="bg-gray-50">
           <tr>
-            <th
-              v-for="column in props.columns"
-              :key="column.prop"
-              :width="column.width"
-              :class="[
+            <th v-for="column in props.columns"
+                :key="column.prop"
+                :width="column.width"
+                :class="[
                 'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider',
                 column.align ? `text-${column.align}` : 'text-left'
-              ]"
-            >
+              ]">
               <div class="flex items-center">
                 {{ column.label }}
 
                 <!-- 排序图标 -->
                 <span v-if="column.sortable" class="ml-1 cursor-pointer" @click="handleSortChange(column.prop, sortOrder === 'asc' ? 'desc' : 'asc')">
-                  <svg
-                    v-if="sortProp === column.prop"
-                    :class="sortOrder === 'asc' ? 'rotate-180' : ''"
-                    class="w-4 h-4 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg v-if="sortProp === column.prop"
+                       :class="sortOrder === 'asc' ? 'rotate-180' : ''"
+                       class="w-4 h-4 text-gray-400"
+                       fill="none"
+                       stroke="currentColor"
+                       viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
                   </svg>
-                  <svg
-                    v-else
-                    class="w-4 h-4 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg v-else
+                       class="w-4 h-4 text-gray-400"
+                       fill="none"
+                       stroke="currentColor"
+                       viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                   </svg>
                 </span>
@@ -180,14 +166,12 @@ const handleSearchKeydown = (event: KeyboardEvent) => {
           <template v-else-if="props.data && props.data.length > 0">
             <!-- 数据行 -->
             <tr v-for="(row, index) in props.data" :key="index" class="hover:bg-gray-50">
-              <td
-                v-for="column in props.columns"
-                :key="column.prop"
-                :class="[
+              <td v-for="column in props.columns"
+                  :key="column.prop"
+                  :class="[
                   'px-6 py-4 whitespace-nowrap text-sm text-gray-900',
                   column.align ? `text-${column.align}` : 'text-left'
-                ]"
-              >
+                ]">
                 <!-- 使用插槽渲染 -->
                 <template v-if="column.slotName">
                   <slot :name="column.slotName" :row="row" :column="column" :index="index"></slot>
@@ -224,30 +208,24 @@ const handleSearchKeydown = (event: KeyboardEvent) => {
 
       <div class="flex items-center space-x-2">
         <!-- 页码选择器 -->
-        <select
-          v-model="pageSize"
-          @change="handlePageSizeChange(pageSize)"
-          class="text-sm border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-        >
+        <select v-model="pageSize"
+                @change="handlePageSizeChange(pageSize)"
+                class="text-sm border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
           <option v-for="option in props.pageSizeOptions" :key="option" :value="option">
             {{ option }} 条/页
           </option>
         </select>
 
         <!-- 分页按钮 -->
-        <button
-          @click="handlePageChange(1)"
-          :disabled="currentPage === 1"
-          class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <button @click="handlePageChange(1)"
+                :disabled="currentPage === 1"
+                class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
           首页
         </button>
 
-        <button
-          @click="handlePageChange(currentPage - 1)"
-          :disabled="currentPage === 1"
-          class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <button @click="handlePageChange(currentPage - 1)"
+                :disabled="currentPage === 1"
+                class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
           上一页
         </button>
 
@@ -255,19 +233,15 @@ const handleSearchKeydown = (event: KeyboardEvent) => {
           {{ currentPage }} / {{ totalPages }}
         </span>
 
-        <button
-          @click="handlePageChange(currentPage + 1)"
-          :disabled="currentPage === totalPages"
-          class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <button @click="handlePageChange(currentPage + 1)"
+                :disabled="currentPage === totalPages"
+                class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
           下一页
         </button>
 
-        <button
-          @click="handlePageChange(totalPages)"
-          :disabled="currentPage === totalPages"
-          class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <button @click="handlePageChange(totalPages)"
+                :disabled="currentPage === totalPages"
+                class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
           末页
         </button>
       </div>
@@ -276,7 +250,7 @@ const handleSearchKeydown = (event: KeyboardEvent) => {
 </template>
 
 <style scoped>
-.base-table-container {
-  width: 100%;
-}
+  .base-table-container {
+    width: 100%;
+  }
 </style>

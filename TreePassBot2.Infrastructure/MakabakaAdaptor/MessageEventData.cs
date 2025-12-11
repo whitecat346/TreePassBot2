@@ -1,4 +1,4 @@
-﻿using TreePassBot2.Core.Entities;
+using TreePassBot2.Core.Entities;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
 
 namespace TreePassBot2.Infrastructure.MakabakaAdaptor;

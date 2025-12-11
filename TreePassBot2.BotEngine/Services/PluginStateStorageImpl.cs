@@ -84,7 +84,6 @@ public class PluginStateStorageImpl(
         entity.StateDataJson = JsonSerializer.Serialize(dateDict);
         entity.UpdatedAt = DateTimeOffset.UtcNow;
 
-
         await db.SaveChangesAsync().ConfigureAwait(false);
     }
 

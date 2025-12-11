@@ -1,7 +1,7 @@
-
 using Serilog;
 using TreePassBot2.Extensions;
 using TreePassBot2.Infrastructure.Logger;
+using TreePassBot2.ServiceDefaults;
 
 namespace BackManager.Server;
 

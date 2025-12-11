@@ -17,11 +17,11 @@ namespace BackManager.Server.Controllers
         /// </summary>
         public class Group
         {
-            public required string Id { get; set; }
-            public required string Name { get; set; }
+            public string Id { get; set; }
+            public string Name { get; set; }
             public int MemberCount { get; set; }
-            public required string OwnerId { get; set; }
-            public required string CreatedAt { get; set; }
+            public string OwnerId { get; set; }
+            public string CreatedAt { get; set; }
         }
 
         /// <summary>

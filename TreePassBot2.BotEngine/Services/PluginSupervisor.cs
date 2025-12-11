@@ -10,7 +10,7 @@ public class PluginSupervisor(
     PluginLoadContext loadCtx,
     ILogger logger)
 {
-    private int _errorCount = 0;
+    private int _errorCount;
     private const int MaxErrors = 5;
     private const int ErrorWindowSeconds = 60;
 

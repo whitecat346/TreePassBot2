@@ -1,7 +1,5 @@
-<script setup lang="ts">
-import Sidebar from './components/Sidebar.vue';
-import Header from './components/Header.vue';
-</script>
+<script setup lang="ts">import Sidebar from './components/Sidebar.vue';
+import Header from './components/Header.vue';</script>
 
 <template>
   <div class="flex h-screen bg-gray-50 font-sans text-gray-900 overflow-hidden">
@@ -20,10 +18,11 @@ import Header from './components/Header.vue';
 </template>
 
 <style>
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.15s ease;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
+  .fade-enter-active, .fade-leave-active {
+    transition: opacity 0.15s ease;
+  }
+
+  .fade-enter-from, .fade-leave-to {
+    opacity: 0;
+  }
 </style>

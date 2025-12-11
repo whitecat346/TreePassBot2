@@ -1,5 +1,4 @@
-<script setup lang="ts">
-import { computed } from 'vue';
+<script setup lang="ts">import { computed } from 'vue';
 
 // 组件属性，使用withDefaults一次性定义
 const props = withDefaults(defineProps<{
@@ -46,33 +45,28 @@ const avatarBgColor = computed(() => {
   const hash = props.username.split('').reduce((acc, char) => {
     return char.charCodeAt(0) + ((acc << 5) - acc);
   }, 0);
-  
+
   // 使用哈希值生成RGB颜色
   const color = Math.abs(hash) % 16777215;
   const r = Math.floor(color / 65536);
   const g = Math.floor((color % 65536) / 256);
   const b = color % 256;
-  
+
   // 返回RGB颜色字符串
   return `rgb(${r}, ${g}, ${b})`;
-});
-</script>
+});</script>
 
 <template>
-  <div
-    class="flex items-center justify-center text-white font-medium"
-    :class="[avatarSize, avatarRadius]"
-    :style="{
+  <div class="flex items-center justify-center text-white font-medium"
+       :class="[avatarSize, avatarRadius]"
+       :style="{
       backgroundColor: props.src ? 'transparent' : avatarBgColor,
       overflow: 'hidden'
-    }"
-  >
-    <img
-      v-if="props.src"
-      :src="props.src"
-      :alt="props.username"
-      class="w-full h-full object-cover"
-    />
+    }">
+    <img v-if="props.src"
+         :src="props.src"
+         :alt="props.username"
+         class="w-full h-full object-cover" />
     <span v-else>{{ initials }}</span>
   </div>
 </template>

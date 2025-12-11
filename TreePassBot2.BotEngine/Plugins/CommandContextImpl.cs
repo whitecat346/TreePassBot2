@@ -1,4 +1,4 @@
-﻿using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
 using TreePassBot2.PluginSdk.Interfaces;
 
@@ -25,7 +25,7 @@ public class CommandContextImpl(ICommunicationService communicationService) : IC
     public Infrastructure.MakabakaAdaptor.Models.Message RawMessage { get; init; }
 
     /// <inheritdoc />
-    public string[] Args { get; }
+    public required string[] Args { get; init; }
 
     /// <inheritdoc />
     public Task ReplyAsync(Infrastructure.MakabakaAdaptor.Models.Message msg)

@@ -24,7 +24,7 @@ public class TreePassBotExample
     public async Task SendSimpleTextMessageAsync()
     {
         // 创建消息构建器
-        var messageBuilder = new TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageBuilder();
+        var messageBuilder = new Models.MessageBuilder();
 
         // 添加文本内容
         messageBuilder.AddText("这是一条简单的文本消息");
@@ -42,7 +42,7 @@ public class TreePassBotExample
     public Task SendComplexMessageAsync()
     {
         // 创建消息构建器
-        var messageBuilder = new TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageBuilder();
+        var messageBuilder = new Models.MessageBuilder();
 
         // 添加多个消息段
         messageBuilder.AddText("大家好，")
@@ -62,7 +62,7 @@ public class TreePassBotExample
     public Task SendReplyMessageAsync()
     {
         // 创建消息构建器
-        var messageBuilder = new TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageBuilder();
+        var messageBuilder = new Models.MessageBuilder();
 
         // 添加回复和文本内容
         messageBuilder.AddReply(12345678901234) // 回复消息ID

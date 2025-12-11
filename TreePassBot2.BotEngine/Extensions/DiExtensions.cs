@@ -1,7 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using TreePassBot2.BotEngine.Message;
 using TreePassBot2.BotEngine.Plugins;
 using TreePassBot2.BotEngine.Services;
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
+using TreePassBot2.Infrastructure.Services;
 
 namespace TreePassBot2.BotEngine.Extensions;
 
@@ -13,7 +15,8 @@ public static class DiExtensions
                 .AddSingleton<CommandContextImplFactory>()
                 .AddSingleton<MessageRouter>()
                 .AddSingleton<MessageArchiveService>()
-                .AddSingleton<BotEventRouter>();
+                .AddSingleton<BotEventRouter>()
+                .AddSingleton<ICommunicationService, MakabakaService>();
 
         return services;
     }

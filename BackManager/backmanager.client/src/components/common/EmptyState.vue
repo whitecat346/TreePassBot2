@@ -1,5 +1,4 @@
-<script setup lang="ts">
-// 组件属性，使用withDefaults一次性定义
+<script setup lang="ts">// 组件属性，使用withDefaults一次性定义
 const props = withDefaults(defineProps<{
   title?: string;
   description?: string;
@@ -10,8 +9,7 @@ const props = withDefaults(defineProps<{
   title: '暂无数据',
   description: '当前没有可用数据',
   icon: 'Database'
-});
-</script>
+});</script>
 
 <template>
   <div class="flex flex-col items-center justify-center py-12 px-4 text-center">
@@ -37,11 +35,9 @@ const props = withDefaults(defineProps<{
 
     <!-- 操作按钮 -->
     <slot name="action">
-      <button
-        v-if="props.actionText && props.onAction"
-        @click="props.onAction"
-        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-      >
+      <button v-if="props.actionText && props.onAction"
+              @click="props.onAction"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
         {{ props.actionText }}
       </button>
     </slot>

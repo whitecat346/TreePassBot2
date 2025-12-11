@@ -1,3 +1,4 @@
+using Makabaka;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
 
 namespace TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
@@ -7,6 +8,8 @@ namespace TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 /// </summary>
 public interface ICommunicationService
 {
+    IBotContext BotContext { get; }
+
     /// <summary>
     /// 发送群消息
     /// </summary>
@@ -45,4 +48,8 @@ public interface ICommunicationService
     /// <param name="forwardId">合并转发ID</param>
     /// <returns>合并转发的消息列表</returns>
     Task<List<Message>> GetForwardMessageAsync(string forwardId);
+
+    Task ConnectAsync();
+
+    Task DisconnectAsync();
 }

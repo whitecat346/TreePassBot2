@@ -9,18 +9,16 @@ namespace TreePassBot2.BotEngine.Plugins;
 
 public class PluginContextImpl : IPluginContext
 {
-    private readonly IServiceProvider _rootService;
     private readonly string _pluginId;
     private readonly MakabakaService _botApi;
 
     public PluginContextImpl(string pluginId, IServiceProvider rootService)
     {
         _pluginId = pluginId;
-        _rootService = rootService;
 
-        _botApi = _rootService.GetRequiredService<MakabakaService>();
+        _botApi = rootService.GetRequiredService<MakabakaService>();
 
-        var scopeFactory = _rootService.GetRequiredService<IServiceScopeFactory>();
+        var scopeFactory = rootService.GetRequiredService<IServiceScopeFactory>();
         State = new PluginStateStorageImpl(pluginId, scopeFactory);
 
         var loggerFactory = rootService.GetRequiredService<ILoggerFactory>();
@@ -30,7 +28,6 @@ public class PluginContextImpl : IPluginContext
     private readonly List<IBotCommand> _commands = [];
 
     public IReadOnlyList<IBotCommand> RegisteredCommands => _commands.AsReadOnly();
-
 
     /// <inheritdoc />
     public void RegisterCommand(IBotCommand command)

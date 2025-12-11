@@ -1,5 +1,4 @@
-<script setup lang="ts">
-defineOptions({
+<script setup lang="ts">defineOptions({
   name: 'SidebarComponent'
 });
 
@@ -16,8 +15,7 @@ const menuItems = [
   { name: '消息日志', path: '/logs', icon: Database },
 ];
 
-const isActive = (path: string) => route.path === path;
-</script>
+const isActive = (path: string) => route.path === path;</script>
 
 <template>
   <aside class="w-64 bg-white border-r border-gray-200 flex flex-col z-10 h-full">
@@ -31,22 +29,18 @@ const isActive = (path: string) => route.path === path;
 
     <!-- Navigation -->
     <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-      <RouterLink
-        v-for="item in menuItems"
-        :key="item.path"
-        :to="item.path"
-        class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200"
-        :class="[
+      <RouterLink v-for="item in menuItems"
+                  :key="item.path"
+                  :to="item.path"
+                  class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200"
+                  :class="[
           isActive(item.path)
             ? 'bg-indigo-50 text-indigo-600 shadow-sm'
             : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-        ]"
-      >
-        <component
-          :is="item.icon"
-          class="mr-3 h-5 w-5 flex-shrink-0 transition-colors"
-          :class="isActive(item.path) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-500'"
-        />
+        ]">
+        <component :is="item.icon"
+                   class="mr-3 h-5 w-5 flex-shrink-0 transition-colors"
+                   :class="isActive(item.path) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-500'" />
         {{ item.name }}
       </RouterLink>
     </nav>

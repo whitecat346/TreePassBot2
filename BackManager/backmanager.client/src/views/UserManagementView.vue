@@ -10,38 +10,32 @@
         <div class="p-4 border-b border-gray-200">
           <h3 class="text-lg font-medium text-gray-900">群组列表</h3>
           <div class="mt-3">
-            <el-input
-              v-model="groupSearchKeyword"
-              placeholder="搜索群组"
-              clearable
-              size="small"
-              prefix-icon="Search"
-              class="w-full"
-            />
+            <el-input v-model="groupSearchKeyword"
+                      placeholder="搜索群组"
+                      clearable
+                      size="small"
+                      prefix-icon="Search"
+                      class="w-full" />
           </div>
         </div>
 
         <div class="overflow-y-auto max-h-[calc(100vh-200px)]">
-          <el-tree
-            v-if="!groupLoading"
-            :data="filteredGroups"
-            :props="groupTreeProps"
-            :default-expand-all="true"
-            :expand-on-click-node="false"
-            :filter-node-method="filterGroupNode"
-            @node-click="handleGroupClick"
-            class="p-2"
-          >
+          <el-tree v-if="!groupLoading"
+                   :data="filteredGroups"
+                   :props="groupTreeProps"
+                   :default-expand-all="true"
+                   :expand-on-click-node="false"
+                   :filter-node-method="filterGroupNode"
+                   @node-click="handleGroupClick"
+                   class="p-2">
             <template #default="{ data }">
               <div class="flex items-center justify-between cursor-pointer px-2 py-1 rounded hover:bg-gray-50 transition-colors">
                 <div class="flex items-center">
                   <el-icon class="mr-2 text-gray-400"><ChatDotRound /></el-icon>
                   <span>{{ data.name }}</span>
-                  <el-tag
-                    v-if="data.memberCount"
-                    size="small"
-                    class="ml-2"
-                  >
+                  <el-tag v-if="data.memberCount"
+                          size="small"
+                          class="ml-2">
                     {{ data.memberCount }}
                   </el-tag>
                 </div>
@@ -63,27 +57,23 @@
           </h3>
 
           <div v-if="selectedGroup" class="flex items-center space-x-3">
-            <el-input
-              v-model="memberSearchKeyword"
-              placeholder="搜索成员"
-              clearable
-              size="small"
-              prefix-icon="Search"
-              class="w-64"
-            />
+            <el-input v-model="memberSearchKeyword"
+                      placeholder="搜索成员"
+                      clearable
+                      size="small"
+                      prefix-icon="Search"
+                      class="w-64" />
           </div>
         </div>
 
         <!-- 成员列表 -->
         <div v-if="selectedGroup">
-          <el-table
-            v-loading="memberLoading"
-            :data="filteredMembers"
-            style="width: 100%"
-            border
-            stripe
-            :header-cell-style="{ background: '#fafafa' }"
-          >
+          <el-table v-loading="memberLoading"
+                    :data="filteredMembers"
+                    style="width: 100%"
+                    border
+                    stripe
+                    :header-cell-style="{ background: '#fafafa' }">
             <!-- 头像列 -->
             <el-table-column label="头像" width="80" align="center">
               <template #default="{ row }">
@@ -96,12 +86,10 @@
               <template #default="{ row }">
                 <div class="flex items-center">
                   <span>{{ row.username }}</span>
-                  <el-tag
-                    v-if="row.nickname && row.nickname !== row.username"
-                    size="small"
-                    type="info"
-                    class="ml-2"
-                  >
+                  <el-tag v-if="row.nickname && row.nickname !== row.username"
+                          size="small"
+                          type="info"
+                          class="ml-2">
                     {{ row.nickname }}
                   </el-tag>
                 </div>
@@ -111,10 +99,8 @@
             <!-- 身份列 -->
             <el-table-column label="身份" width="120" align="center">
               <template #default="{ row }">
-                <StatusBadge
-                  :status="getRoleStatus(row.role)"
-                  :text="getRoleText(row.role)"
-                />
+                <StatusBadge :status="getRoleStatus(row.role)"
+                             :text="getRoleText(row.role)" />
               </template>
             </el-table-column>
 
@@ -128,11 +114,9 @@
             <!-- 操作列 -->
             <el-table-column label="操作" width="120" align="center">
               <template #default="{ row }">
-                <el-button
-                  type="primary"
-                  size="small"
-                  @click="handleViewMember(row)"
-                >
+                <el-button type="primary"
+                           size="small"
+                           @click="handleViewMember(row)">
                   查看详情
                 </el-button>
               </template>
@@ -141,44 +125,36 @@
 
           <!-- 分页 -->
           <div v-if="memberTotal > 0" class="p-4 border-t border-gray-200">
-            <el-pagination
-              v-model:current-page="memberCurrentPage"
-              v-model:page-size="memberPageSize"
-              :page-sizes="[10, 20, 50, 100]"
-              :total="memberTotal"
-              layout="total, sizes, prev, pager, next, jumper"
-              @size-change="handleMemberPageSizeChange"
-              @current-change="handleMemberPageChange"
-            />
+            <el-pagination v-model:current-page="memberCurrentPage"
+                           v-model:page-size="memberPageSize"
+                           :page-sizes="[10, 20, 50, 100]"
+                           :total="memberTotal"
+                           layout="total, sizes, prev, pager, next, jumper"
+                           @size-change="handleMemberPageSizeChange"
+                           @current-change="handleMemberPageChange" />
           </div>
         </div>
 
         <!-- 未选择群组时的提示 -->
         <div v-else class="p-12 text-center">
-          <EmptyState
-            title="未选择群组"
-            description="请从左侧选择一个群组查看成员信息"
-            icon="Users"
-          />
+          <EmptyState title="未选择群组"
+                      description="请从左侧选择一个群组查看成员信息"
+                      icon="Users" />
         </div>
       </div>
     </div>
 
     <!-- 成员详情弹窗 -->
-    <el-dialog
-      v-model="memberDetailVisible"
-      title="成员详情"
-      width="500px"
-      :before-close="handleCloseDetail"
-    >
+    <el-dialog v-model="memberDetailVisible"
+               title="成员详情"
+               width="500px"
+               :before-close="handleCloseDetail">
       <div v-if="selectedMember" class="member-detail-content">
         <div class="flex items-center justify-center mb-6">
-          <Avatar
-            :src="selectedMember.avatar"
-            :username="selectedMember.username"
-            size="lg"
-            rounded
-          />
+          <Avatar :src="selectedMember.avatar"
+                  :username="selectedMember.username"
+                  size="lg"
+                  rounded />
         </div>
 
         <el-descriptions :column="1" border>
@@ -192,10 +168,8 @@
             {{ selectedMember.nickname || '无' }}
           </el-descriptions-item>
           <el-descriptions-item label="身份">
-            <StatusBadge
-              :status="getRoleStatus(selectedMember.role)"
-              :text="getRoleText(selectedMember.role)"
-            />
+            <StatusBadge :status="getRoleStatus(selectedMember.role)"
+                         :text="getRoleText(selectedMember.role)" />
           </el-descriptions-item>
           <el-descriptions-item label="加入时间">
             {{ new Date(selectedMember.joinedAt).toLocaleString() }}
@@ -215,8 +189,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+<script setup lang="ts">import { ref, computed, onMounted } from 'vue';
 import {
   getGroups,
   getGroupMembers,
@@ -395,19 +368,18 @@ const handleCloseDetail = () => {
 // 组件挂载时初始化
 onMounted(() => {
   fetchGroups();
-});
-</script>
+});</script>
 
 <style scoped>
-.user-management-container {
-  width: 100%;
-}
+  .user-management-container {
+    width: 100%;
+  }
 
-.member-detail-content {
-  padding: 20px 0;
-}
+  .member-detail-content {
+    padding: 20px 0;
+  }
 
-.dialog-footer {
-  text-align: right;
-}
+  .dialog-footer {
+    text-align: right;
+  }
 </style>

@@ -12,11 +12,11 @@ public static class SerilogExtensions
     /// </summary>
     public static void ConfigureSmartLogger(this IHostApplicationBuilder builder)
     {
-        builder.Services.AddSerilog((provider, configuration) =>
+        builder.Services.AddSerilog((_, configuration) =>
         {
             configuration.ReadFrom.Configuration(builder.Configuration);
 
-            var connectionString = builder.Configuration.GetConnectionString("serilogdb");
+            var connectionString = builder.Configuration.GetConnectionString("SerilogDb");
 
             if (!string.IsNullOrEmpty(connectionString))
             {

@@ -8,54 +8,42 @@
       <div class="filter-container flex flex-wrap gap-4 items-center">
         <div class="flex items-center space-x-2">
           <span class="text-sm font-medium text-gray-700">群聊：</span>
-          <el-select
-            v-model="filterGroupId"
-            placeholder="全部"
-            clearable
-            size="small"
-            class="w-64"
-          >
-            <el-option
-              v-for="group in groups"
-              :key="group.id"
-              :label="group.name"
-              :value="group.id"
-            />
+          <el-select v-model="filterGroupId"
+                     placeholder="全部"
+                     clearable
+                     size="small"
+                     class="w-64">
+            <el-option v-for="group in groups"
+                       :key="group.id"
+                       :label="group.name"
+                       :value="group.id" />
           </el-select>
         </div>
 
         <div class="flex items-center space-x-2">
           <span class="text-sm font-medium text-gray-700">包含撤回消息：</span>
-          <el-switch
-            v-model="filterIncludeRecalled"
-            size="small"
-          />
+          <el-switch v-model="filterIncludeRecalled"
+                     size="small" />
         </div>
 
         <div class="flex items-center space-x-2 flex-1 md:flex-none">
           <span class="text-sm font-medium text-gray-700">搜索：</span>
-          <el-input
-            v-model="filterKeyword"
-            placeholder="消息内容/用户名/用户ID"
-            clearable
-            size="small"
-            prefix-icon="Search"
-            class="w-full md:w-64"
-            @keydown.enter="handleSearch"
-          />
-          <el-button
-            type="primary"
-            size="small"
-            class="ml-2"
-            @click="handleSearch"
-          >
+          <el-input v-model="filterKeyword"
+                    placeholder="消息内容/用户名/用户ID"
+                    clearable
+                    size="small"
+                    prefix-icon="Search"
+                    class="w-full md:w-64"
+                    @keydown.enter="handleSearch" />
+          <el-button type="primary"
+                     size="small"
+                     class="ml-2"
+                     @click="handleSearch">
             搜索
           </el-button>
-          <el-button
-            size="small"
-            class="ml-2"
-            @click="handleReset"
-          >
+          <el-button size="small"
+                     class="ml-2"
+                     @click="handleReset">
             重置
           </el-button>
         </div>
@@ -71,11 +59,9 @@
         </h3>
         <div class="text-sm text-gray-500">
           显示：
-          <el-radio-group
-            v-model="displayMode"
-            size="small"
-            class="ml-2"
-          >
+          <el-radio-group v-model="displayMode"
+                          size="small"
+                          class="ml-2">
             <el-radio-button label="all">全部</el-radio-button>
             <el-radio-button label="recalled">仅撤回</el-radio-button>
             <el-radio-button label="normal">仅正常</el-radio-button>
@@ -93,11 +79,9 @@
 
       <div v-else-if="filteredMessages.length > 0" class="discord-style-messages">
         <!-- 按日期分组显示消息 -->
-        <div
-          v-for="(dateGroup, date) in groupedMessages"
-          :key="date"
-          class="mb-8"
-        >
+        <div v-for="(dateGroup, date) in groupedMessages"
+             :key="date"
+             class="mb-8">
           <!-- 日期分隔线 -->
           <div class="flex items-center justify-center mb-4">
             <div class="h-px bg-gray-200 flex-1"></div>
@@ -109,20 +93,16 @@
 
           <!-- 该日期下的消息 -->
           <div class="space-y-4">
-            <div
-              v-for="message in dateGroup"
-              :key="message.id"
-              class="message-item flex gap-3"
-              :class="{ 'recalled-message': message.isRecalled }"
-            >
+            <div v-for="message in dateGroup"
+                 :key="message.id"
+                 class="message-item flex gap-3"
+                 :class="{ 'recalled-message': message.isRecalled }">
               <!-- 头像 -->
               <div class="message-avatar flex-shrink-0">
-                <Avatar
-                  :src="null"
-                  :username="message.username"
-                  size="sm"
-                  rounded
-                />
+                <Avatar :src="null"
+                        :username="message.username"
+                        size="sm"
+                        rounded />
               </div>
 
               <!-- 消息内容 -->
@@ -135,12 +115,10 @@
                   </span>
 
                   <!-- 撤回标记 -->
-                  <el-tag
-                    v-if="message.isRecalled"
-                    size="small"
-                    type="danger"
-                    class="ml-2"
-                  >
+                  <el-tag v-if="message.isRecalled"
+                          size="small"
+                          type="danger"
+                          class="ml-2">
                     已撤回
                   </el-tag>
                 </div>
@@ -176,31 +154,26 @@
 
       <!-- 空状态 -->
       <div v-else class="p-12">
-        <EmptyState
-          title="暂无消息日志"
-          description="当前没有消息日志，或搜索条件过于严格"
-          icon="Database"
-        />
+        <EmptyState title="暂无消息日志"
+                    description="当前没有消息日志，或搜索条件过于严格"
+                    icon="Database" />
       </div>
 
       <!-- 分页 -->
       <div v-if="!loading && filteredMessages.length > 0" class="p-4 border-t border-gray-200 mt-6">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="messages.length"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handlePageSizeChange"
-          @current-change="handlePageChange"
-        />
+        <el-pagination v-model:current-page="currentPage"
+                       v-model:page-size="pageSize"
+                       :page-sizes="[10, 20, 50, 100]"
+                       :total="messages.length"
+                       layout="total, sizes, prev, pager, next, jumper"
+                       @size-change="handlePageSizeChange"
+                       @current-change="handlePageChange" />
       </div>
     </el-card>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+<script setup lang="ts">import { ref, computed, onMounted } from 'vue';
 import {
   getMessageLogs,
   type MessageLog
@@ -353,100 +326,99 @@ const handlePageChange = (page: number) => {
 // 组件挂载时初始化
 onMounted(() => {
   fetchMessageLogs();
-});
-</script>
+});</script>
 
 <style scoped>
-.message-log-container {
-  width: 100%;
-}
+  .message-log-container {
+    width: 100%;
+  }
 
-.filter-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  align-items: center;
-}
+  .filter-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+  }
 
-.message-list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+  .message-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 
-.discord-style-messages {
-  max-height: calc(100vh - 400px);
-  overflow-y: auto;
-  padding-right: 8px;
-}
+  .discord-style-messages {
+    max-height: calc(100vh - 400px);
+    overflow-y: auto;
+    padding-right: 8px;
+  }
 
-.message-item {
-  padding: 8px;
-  border-radius: 8px;
-  transition: background-color 0.2s;
-}
+  .message-item {
+    padding: 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+  }
 
-.message-item:hover {
-  background-color: #f9fafb;
-}
+    .message-item:hover {
+      background-color: #f9fafb;
+    }
 
-.message-item.recalled-message {
-  opacity: 0.7;
-}
+    .message-item.recalled-message {
+      opacity: 0.7;
+    }
 
-.message-avatar {
-  flex-shrink: 0;
-}
+  .message-avatar {
+    flex-shrink: 0;
+  }
 
-.message-content {
-  flex: 1;
-  min-width: 0;
-}
+  .message-content {
+    flex: 1;
+    min-width: 0;
+  }
 
-.message-header {
-  display: flex;
-  align-items: center;
-}
+  .message-header {
+    display: flex;
+    align-items: center;
+  }
 
-.message-username {
-  font-weight: 600;
-  color: #1f2937;
-}
+  .message-username {
+    font-weight: 600;
+    color: #1f2937;
+  }
 
-.message-time {
-  color: #6b7280;
-  font-size: 12px;
-}
+  .message-time {
+    color: #6b7280;
+    font-size: 12px;
+  }
 
-.message-text {
-  color: #374151;
-  line-height: 1.5;
-  margin-bottom: 4px;
-}
+  .message-text {
+    color: #374151;
+    line-height: 1.5;
+    margin-bottom: 4px;
+  }
 
-.message-meta {
-  display: flex;
-  align-items: center;
-  color: #9ca3af;
-  font-size: 12px;
-}
+  .message-meta {
+    display: flex;
+    align-items: center;
+    color: #9ca3af;
+    font-size: 12px;
+  }
 
-/* 滚动条样式 */
-.discord-style-messages::-webkit-scrollbar {
-  width: 6px;
-}
+  /* 滚动条样式 */
+  .discord-style-messages::-webkit-scrollbar {
+    width: 6px;
+  }
 
-.discord-style-messages::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
+  .discord-style-messages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
 
-.discord-style-messages::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
+  .discord-style-messages::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
 
-.discord-style-messages::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
+    .discord-style-messages::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+    }
 </style>

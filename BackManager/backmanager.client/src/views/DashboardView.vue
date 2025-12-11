@@ -50,37 +50,31 @@
             <el-descriptions :column="1" border>
               <el-descriptions-item label="CPU使用率">
                 <div class="flex items-center">
-                  <el-progress
-                    :percentage="serverStatus.cpuUsage"
-                    :stroke-width="8"
-                    :show-text="false"
-                    class="flex-1 mr-3"
-                    :color="getProgressColor(serverStatus.cpuUsage)"
-                  />
+                  <el-progress :percentage="serverStatus.cpuUsage"
+                               :stroke-width="8"
+                               :show-text="false"
+                               class="flex-1 mr-3"
+                               :color="getProgressColor(serverStatus.cpuUsage)" />
                   <span class="text-sm">{{ serverStatus.cpuUsage }}%</span>
                 </div>
               </el-descriptions-item>
               <el-descriptions-item label="内存使用率">
                 <div class="flex items-center">
-                  <el-progress
-                    :percentage="serverStatus.memoryUsage"
-                    :stroke-width="8"
-                    :show-text="false"
-                    class="flex-1 mr-3"
-                    :color="getProgressColor(serverStatus.memoryUsage)"
-                  />
+                  <el-progress :percentage="serverStatus.memoryUsage"
+                               :stroke-width="8"
+                               :show-text="false"
+                               class="flex-1 mr-3"
+                               :color="getProgressColor(serverStatus.memoryUsage)" />
                   <span class="text-sm">{{ serverStatus.memoryUsage }}%</span>
                 </div>
               </el-descriptions-item>
               <el-descriptions-item label="磁盘使用率">
                 <div class="flex items-center">
-                  <el-progress
-                    :percentage="serverStatus.diskUsage"
-                    :stroke-width="8"
-                    :show-text="false"
-                    class="flex-1 mr-3"
-                    :color="getProgressColor(serverStatus.diskUsage)"
-                  />
+                  <el-progress :percentage="serverStatus.diskUsage"
+                               :stroke-width="8"
+                               :show-text="false"
+                               class="flex-1 mr-3"
+                               :color="getProgressColor(serverStatus.diskUsage)" />
                   <span class="text-sm">{{ serverStatus.diskUsage }}%</span>
                 </div>
               </el-descriptions-item>
@@ -146,8 +140,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, onMounted } from 'vue';
+<script setup lang="ts">import { ref, onMounted } from 'vue';
 import {
   getBotStatus,
   startBot,
@@ -266,17 +259,16 @@ onMounted(() => {
     fetchBotStatus();
     fetchServerStatus();
   }, 30000);
-});
-</script>
+});</script>
 
 <style scoped>
-.dashboard-container {
-  width: 100%;
-}
+  .dashboard-container {
+    width: 100%;
+  }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 </style>

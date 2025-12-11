@@ -8,13 +8,11 @@
       <div class="filter-container flex flex-wrap gap-4 items-center">
         <div class="flex items-center space-x-2">
           <span class="text-sm font-medium text-gray-700">状态：</span>
-          <el-select
-            v-model="filterStatus"
-            placeholder="全部"
-            clearable
-            size="small"
-            class="w-40"
-          >
+          <el-select v-model="filterStatus"
+                     placeholder="全部"
+                     clearable
+                     size="small"
+                     class="w-40">
             <el-option label="待审核" value="Pending" />
             <el-option label="已通过" value="Approved" />
             <el-option label="已拒绝" value="Rejected" />
@@ -23,13 +21,11 @@
 
         <div class="flex items-center space-x-2">
           <span class="text-sm font-medium text-gray-700">入群状态：</span>
-          <el-select
-            v-model="filterEnteredGroup"
-            placeholder="全部"
-            clearable
-            size="small"
-            class="w-40"
-          >
+          <el-select v-model="filterEnteredGroup"
+                     placeholder="全部"
+                     clearable
+                     size="small"
+                     class="w-40">
             <el-option label="已入群" :value="true" />
             <el-option label="未入群" :value="false" />
           </el-select>
@@ -37,14 +33,12 @@
 
         <div class="flex items-center space-x-2">
           <span class="text-sm font-medium text-gray-700">搜索：</span>
-          <el-input
-            v-model="filterKeyword"
-            placeholder="用户名/用户ID"
-            clearable
-            size="small"
-            prefix-icon="Search"
-            class="w-64"
-          />
+          <el-input v-model="filterKeyword"
+                    placeholder="用户名/用户ID"
+                    clearable
+                    size="small"
+                    prefix-icon="Search"
+                    class="w-64" />
         </div>
 
         <div class="flex items-center space-x-2">
@@ -60,14 +54,12 @@
 
     <!-- 审核列表 -->
     <el-card shadow="never">
-      <el-table
-        v-loading="loading"
-        :data="filteredAudits"
-        style="width: 100%"
-        border
-        stripe
-        :header-cell-style="{ background: '#fafafa' }"
-      >
+      <el-table v-loading="loading"
+                :data="filteredAudits"
+                style="width: 100%"
+                border
+                stripe
+                :header-cell-style="{ background: '#fafafa' }">
         <!-- 用户信息列 -->
         <el-table-column label="用户信息" min-width="200">
           <template #default="{ row }">
@@ -87,10 +79,8 @@
         <!-- 审核状态列 -->
         <el-table-column label="审核状态" width="120" align="center">
           <template #default="{ row }">
-            <StatusBadge
-              :status="getAuditStatus(row.status)"
-              :text="getAuditStatusText(row.status)"
-            />
+            <StatusBadge :status="getAuditStatus(row.status)"
+                         :text="getAuditStatusText(row.status)" />
           </template>
         </el-table-column>
 
@@ -105,12 +95,10 @@
         <!-- 入群状态列 -->
         <el-table-column label="入群状态" width="120" align="center">
           <template #default="{ row }">
-            <el-switch
-              v-model="row.enteredGroup"
-              :disabled="true"
-              active-text="已入群"
-              inactive-text="未入群"
-            />
+            <el-switch v-model="row.enteredGroup"
+                       :disabled="true"
+                       active-text="已入群"
+                       inactive-text="未入群" />
           </template>
         </el-table-column>
 
@@ -136,31 +124,25 @@
           <template #default="{ row }">
             <div class="flex space-x-2">
               <!-- 审核通过按钮 -->
-              <el-button
-                v-if="row.status === 'Pending'"
-                type="success"
-                size="small"
-                @click="handleApprove(row)"
-              >
+              <el-button v-if="row.status === 'Pending'"
+                         type="success"
+                         size="small"
+                         @click="handleApprove(row)">
                 通过
               </el-button>
 
               <!-- 拒绝审核按钮 -->
-              <el-button
-                v-if="row.status === 'Pending'"
-                type="danger"
-                size="small"
-                @click="handleReject(row)"
-              >
+              <el-button v-if="row.status === 'Pending'"
+                         type="danger"
+                         size="small"
+                         @click="handleReject(row)">
                 拒绝
               </el-button>
 
               <!-- 查看详情按钮 -->
-              <el-button
-                type="primary"
-                size="small"
-                @click="handleViewDetail(row)"
-              >
+              <el-button type="primary"
+                         size="small"
+                         @click="handleViewDetail(row)">
                 详情
               </el-button>
             </div>
@@ -170,34 +152,28 @@
 
       <!-- 分页 -->
       <div v-if="auditTotal > 0" class="p-4 border-t border-gray-200">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="auditTotal"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handlePageSizeChange"
-          @current-change="handlePageChange"
-        />
+        <el-pagination v-model:current-page="currentPage"
+                       v-model:page-size="pageSize"
+                       :page-sizes="[10, 20, 50, 100]"
+                       :total="auditTotal"
+                       layout="total, sizes, prev, pager, next, jumper"
+                       @size-change="handlePageSizeChange"
+                       @current-change="handlePageChange" />
       </div>
 
       <!-- 空状态 -->
       <div v-if="!loading && filteredAudits.length === 0" class="p-12">
-        <EmptyState
-          title="暂无审核记录"
-          description="当前没有审核记录，或搜索条件过于严格"
-          icon="FileText"
-        />
+        <EmptyState title="暂无审核记录"
+                    description="当前没有审核记录，或搜索条件过于严格"
+                    icon="FileText" />
       </div>
     </el-card>
 
     <!-- 审核详情弹窗 -->
-    <el-dialog
-      v-model="detailVisible"
-      title="审核详情"
-      width="500px"
-      :before-close="handleCloseDetail"
-    >
+    <el-dialog v-model="detailVisible"
+               title="审核详情"
+               width="500px"
+               :before-close="handleCloseDetail">
       <div v-if="selectedAudit" class="audit-detail-content">
         <el-descriptions :column="1" border>
           <el-descriptions-item label="用户ID">
@@ -213,10 +189,8 @@
             {{ selectedAudit.groupName }}
           </el-descriptions-item>
           <el-descriptions-item label="审核状态">
-            <StatusBadge
-              :status="getAuditStatus(selectedAudit.status)"
-              :text="getAuditStatusText(selectedAudit.status)"
-            />
+            <StatusBadge :status="getAuditStatus(selectedAudit.status)"
+                         :text="getAuditStatusText(selectedAudit.status)" />
           </el-descriptions-item>
           <el-descriptions-item label="验证码">
             <span v-if="selectedAudit.verificationCode" class="font-mono">{{ selectedAudit.verificationCode }}</span>
@@ -248,8 +222,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+<script setup lang="ts">import { ref, computed, onMounted } from 'vue';
 import {
   getAuditRecords,
   approveAudit,
@@ -436,26 +409,25 @@ const handlePageChange = (page: number) => {
 // 组件挂载时初始化
 onMounted(() => {
   fetchAuditRecords();
-});
-</script>
+});</script>
 
 <style scoped>
-.audit-view-container {
-  width: 100%;
-}
+  .audit-view-container {
+    width: 100%;
+  }
 
-.filter-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  align-items: center;
-}
+  .filter-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+  }
 
-.audit-detail-content {
-  padding: 20px 0;
-}
+  .audit-detail-content {
+    padding: 20px 0;
+  }
 
-.dialog-footer {
-  text-align: right;
-}
+  .dialog-footer {
+    text-align: right;
+  }
 </style>

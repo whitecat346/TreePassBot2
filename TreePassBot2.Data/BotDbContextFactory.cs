@@ -9,7 +9,7 @@ public class BotDbContextFactory : IDesignTimeDbContextFactory<BotDbContext>
     /// <inheritdoc />
     public BotDbContext CreateDbContext(string[] args)
     {
-        var basePath = Path.Combine(Directory.GetCurrentDirectory(), "../TreePassBot2");
+        var basePath = Path.Combine(Directory.GetCurrentDirectory(), "../BackManager/BackManager.Server");
         var configuration = new ConfigurationBuilder()
                            .SetBasePath(basePath)
                            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)

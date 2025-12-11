@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 using TreePassBot2.PluginSdk.Interfaces;
 
@@ -18,7 +17,7 @@ public class CommandContextImplFactory(IServiceProvider serviceProvider)
         Infrastructure.MakabakaAdaptor.Models.Message rawMessage)
     {
         var communicationService = serviceProvider.GetRequiredService<ICommunicationService>();
-        var logger = serviceProvider.GetRequiredService<ILogger<CommandContextImpl>>();
+        //var logger = serviceProvider.GetRequiredService<ILogger<CommandContextImpl>>();
 
         var instance = new CommandContextImpl(communicationService)
         {
@@ -26,7 +25,8 @@ public class CommandContextImplFactory(IServiceProvider serviceProvider)
             SenderId = senderId,
             GroupId = groupId,
             MessageId = msgId,
-            RawMessage = rawMessage
+            RawMessage = rawMessage,
+            Args = [] // TODO: impl args parser
         };
 
         return instance;

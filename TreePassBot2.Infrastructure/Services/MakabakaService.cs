@@ -11,17 +11,20 @@ namespace TreePassBot2.Infrastructure.Services;
 /// <summary>
 /// Makabaka通信服务实现
 /// </summary>
-public class MakabakaService : ICommunicationService
+public class MakabakaService : ICommunicationService, IAsyncDisposable
 {
-    public IBotContext BotContext { get; }
+    private readonly MakabakaApp _makabakaApp;
+    public IBotContext BotContext => _makabakaApp.BotContext;
 
     /// <summary>
     /// 构造函数
     /// </summary>
-    /// <param name="botContext">Makabaka机器人上下文</param>
-    public MakabakaService(Makabaka.IBotContext botContext)
+    public MakabakaService()
     {
-        BotContext = botContext ?? throw new ArgumentNullException(nameof(botContext));
+        var makaAppBuilder = new MakabakaAppBuilder();
+        var makaApp = makaAppBuilder.Build();
+
+        _makabakaApp = makaApp;
     }
 
     /// <summary>
@@ -183,5 +186,27 @@ public class MakabakaService : ICommunicationService
         {
             throw new Exception($"获取合并转发消息时发生异常: {ex.Message}", ex);
         }
+    }
+
+    /// <inheritdoc />
+    public Task ConnectAsync()
+    {
+        return _makabakaApp.StartAsync();
+    }
+
+    /// <inheritdoc />
+    public Task DisconnectAsync()
+    {
+        return _makabakaApp.StopAsync();
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+
+        await DisconnectAsync().ConfigureAwait(false);
+
+        _makabakaApp.Dispose();
     }
 }

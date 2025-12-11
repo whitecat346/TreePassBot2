@@ -68,7 +68,7 @@ public class PluginManager(IServiceProvider services, ILogger<PluginManager> log
     {
         if (_commandRouteTable.ContainsKey(trigger))
         {
-            logger.LogWarning("命令冲突：触发词 '{Trigger}' 已被其他插件占用，插件 {NewPlugin} 的该命令将被忽略。",
+            logger.LogWarning("Trigger '{Trigger}' is already registered by {NewPlugin}",
                               trigger, supervisor.Meta.Id);
             return;
         }
@@ -98,7 +98,7 @@ public class PluginManager(IServiceProvider services, ILogger<PluginManager> log
                 _commandRouteTable.TryRemove(key, out _);
             }
 
-            logger.LogInformation("插件 {Id} 已卸载并清理路由。", pluginId);
+            logger.LogInformation("Unload plugin {Id} successfully", pluginId);
         }
     }
 
@@ -111,7 +111,7 @@ public class PluginManager(IServiceProvider services, ILogger<PluginManager> log
     {
         if (!_commandRouteTable.TryGetValue(cmdTrigger, out var value))
         {
-            var replyMsg = new MessageBuilder().AddText("未找到匹配的命令处理程序。");
+            var replyMsg = new MessageBuilder().AddText("Command not found");
 
             await msgCtx.ReplyAsync(replyMsg).ConfigureAwait(false);
             return;

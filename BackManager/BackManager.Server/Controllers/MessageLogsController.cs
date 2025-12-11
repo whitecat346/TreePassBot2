@@ -15,13 +15,13 @@ namespace BackManager.Server.Controllers
         /// </summary>
         private class MessageLog
         {
-            public required string Id { get; set; }
-            public required string GroupId { get; set; }
-            public required string GroupName { get; set; }
-            public required string UserId { get; set; }
-            public required string Username { get; set; }
-            public required string Content { get; set; }
-            public required string SendTime { get; set; }
+            public string Id { get; set; }
+            public string GroupId { get; set; }
+            public string GroupName { get; set; }
+            public string UserId { get; set; }
+            public string Username { get; set; }
+            public string Content { get; set; }
+            public string SendTime { get; set; }
             public bool IsRecalled { get; set; }
             public string? RecalledBy { get; set; }
             public string? RecalledAt { get; set; }

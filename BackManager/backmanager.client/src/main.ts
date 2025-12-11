@@ -11,12 +11,12 @@ const app = createApp(App);
 app.use(createPinia());
 app.use(router);
 app.use(PrimeVue, {
-    theme: {
-        preset: Aura,
-        options: {
-            darkModeSelector: '.fake-dark-mode', // 强制亮色，除非手动切换
-        }
+  theme: {
+    preset: Aura,
+    options: {
+      darkModeSelector: '.fake-dark-mode', // 强制亮色，除非手动切换
     }
+  }
 });
 
 app.mount('#app');

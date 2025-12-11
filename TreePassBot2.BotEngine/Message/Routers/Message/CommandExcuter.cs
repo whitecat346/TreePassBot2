@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using TreePassBot2.BotEngine.Interfaces;
 using TreePassBot2.BotEngine.Plugins;
 using TreePassBot2.BotEngine.Services;

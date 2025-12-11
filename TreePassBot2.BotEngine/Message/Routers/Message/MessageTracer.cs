@@ -1,4 +1,4 @@
-﻿using TreePassBot2.BotEngine.Interfaces;
+using TreePassBot2.BotEngine.Interfaces;
 using TreePassBot2.Core.Entities;
 using TreePassBot2.Data;
 using TreePassBot2.Infrastructure.MakabakaAdaptor;
