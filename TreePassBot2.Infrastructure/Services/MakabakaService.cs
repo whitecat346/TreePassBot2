@@ -1,9 +1,13 @@
 using Makabaka;
 using Makabaka.Exceptions;
+using Makabaka.Models;
+using TreePassBot2.Core.Entities;
+using TreePassBot2.Core.Entities.Enums;
 using TreePassBot2.Infrastructure.Exceptions;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Converters;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
-using TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments;
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MetaInfo;
 using MessageBuilder = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageBuilder;
 
 namespace TreePassBot2.Infrastructure.Services;
@@ -168,7 +172,7 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
             var result = new List<Message>();
             if (response.Data?.Message is { Count: > 0 })
             {
-                var message = MessageConverter.ConvertToTreePassBotMessage(response.Data.Message);
+                var message = MessageConverter.ConvertToBotMessage(response.Data.Message);
                 result.AddRange(message);
             }
 
@@ -189,6 +193,18 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
     }
 
     /// <inheritdoc />
+    public async Task<QqUserInfo> GetGroupMemberInfoAsync(ulong groupId, ulong userId)
+    {
+        var apiRep = await _makabakaApp.BotContext.GetGroupMemberInfoAsync(groupId, userId).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public Task<IEnumerable<QqUserInfo>> GetGroupMemberListAsync(ulong groupId)
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <inheritdoc />
     public Task ConnectAsync()
     {
         return _makabakaApp.StartAsync();
@@ -199,6 +215,21 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
     {
         return _makabakaApp.StopAsync();
     }
+
+    private MemberInfo ConvertToQqUserInfo(GroupMemberInfo memberInfo) =>
+        new(memberInfo.GroupId,
+            memberInfo.UserId,
+            memberInfo.Nickname,
+            ConverteToMyRole(memberInfo.Role));
+
+    private static UserRole ConverteToMyRole(GroupRoleType roleType) =>
+        roleType switch
+        {
+            GroupRoleType.Owner => UserRole.Owner,
+            GroupRoleType.Admin => UserRole.Admin,
+            GroupRoleType.Member => UserRole.Member,
+            _ => UserRole.Member,
+        };
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()

@@ -11,6 +11,7 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        // database logging configuration
         builder.ConfigureSmartLogger();
 
         builder.AddServiceDefaults();

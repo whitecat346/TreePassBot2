@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TreePassBot2.BotEngine.Message.Routers.Event;
 using TreePassBot2.BotEngine.Services;
-using TreePassBot2.Core.Entities;
+using TreePassBot2.Core.Entities.Enums;
 using TreePassBot2.Core.Options;
 using TreePassBot2.Infrastructure.MakabakaAdaptor;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Converters;
@@ -19,7 +19,6 @@ public class BotEventRouter
     private readonly MessageRouter _router;
     private readonly IServiceProvider _serviceProvider;
     private readonly BotOptions _config;
-    private readonly ICommunicationService _makabaka;
 
     public BotEventRouter(
         IServiceProvider serviceProvider,
@@ -29,19 +28,19 @@ public class BotEventRouter
 
         _logger = _serviceProvider.GetRequiredService<ILogger<BotEventRouter>>();
         _router = _serviceProvider.GetRequiredService<MessageRouter>();
-        _makabaka = _serviceProvider.GetRequiredService<ICommunicationService>();
+        var makabaka = _serviceProvider.GetRequiredService<ICommunicationService>();
         _config = config.Value;
 
-        _makabaka.BotContext.OnGroupMessage += BotContextOnOnGroupMessageAsync;
+        makabaka.BotContext.OnGroupMessage += BotContextOnOnGroupMessageAsync;
 
-        _makabaka.BotContext.OnGroupMemberIncrease += BotContextOnOnGroupMemberIncreaseAsync;
-        _makabaka.BotContext.OnGroupMemberDecrease += BotContextOnOnGroupMemberDecreaseAsync;
+        makabaka.BotContext.OnGroupMemberIncrease += BotContextOnOnGroupMemberIncreaseAsync;
+        makabaka.BotContext.OnGroupMemberDecrease += BotContextOnOnGroupMemberDecreaseAsync;
 
-        _makabaka.BotContext.OnGroupAddRequest += BotContextOnOnGroupAddRequestAsync;
+        makabaka.BotContext.OnGroupAddRequest += BotContextOnOnGroupAddRequestAsync;
 
-        _makabaka.BotContext.OnGroupMemberMute += BotContextOnOnGroupMemberMuteAsync;
+        makabaka.BotContext.OnGroupMemberMute += BotContextOnOnGroupMemberMuteAsync;
 
-        _makabaka.BotContext.OnGroupMessageWithdraw += BotContextOnOnGroupMessageWithdrawAsync;
+        makabaka.BotContext.OnGroupMessageWithdraw += BotContextOnOnGroupMessageWithdrawAsync;
     }
 
     private Task BotContextOnOnGroupMessageWithdrawAsync(object _, GroupMessageWithdrawEventArgs e)
@@ -61,10 +60,9 @@ public class BotEventRouter
 
         await archiver.ArchiveUserMessageAsync(
             e.GroupId,
-            e.UserId,
             e.OperatorId,
-            $"Muted for {e.Duration}s",
-            TimeSpan.FromHours(2)).ConfigureAwait(false);
+            e.UserId,
+            $"Muted for {e.Duration}s", TimeSpan.FromHours(2)).ConfigureAwait(false);
     }
 
     private Task BotContextOnOnGroupAddRequestAsync(object _, GroupAddRequestEventArgs e)
@@ -88,10 +86,9 @@ public class BotEventRouter
 
         await archiver.ArchiveUserMessageAsync(
             e.GroupId,
-            e.UserId,
             e.OperatorId,
-            reason,
-            TimeSpan.FromHours(2)).ConfigureAwait(false);
+            e.UserId,
+            reason, TimeSpan.FromHours(2)).ConfigureAwait(false);
     }
 
     private Task BotContextOnOnGroupMemberIncreaseAsync(object _, GroupMemberIncreaseEventArgs e)
@@ -111,7 +108,7 @@ public class BotEventRouter
         // build message event data
         var senderNickName = e.Sender?.Nickname ?? string.Empty;
         var senderData = new SenderData(e.UserId, senderNickName, e.Anonymous is null, UserRoleMapper(e.Sender?.Role));
-        var msg = MessageConverter.ConvertToTreePassBotMessage(e.Message);
+        var msg = MessageConverter.ConvertToBotMessage(e.Message);
 
         var msgData = new MessageEventData(senderData, msg, e.MessageId, e.GroupId);
 

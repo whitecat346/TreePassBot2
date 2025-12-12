@@ -2,8 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 using TreePassBot2.Core.Entities;
+using TreePassBot2.Core.Entities.Enums;
 using TreePassBot2.Data;
-using TreePassBot2.PluginSdk.Entities;
+using TreePassBot2.PluginSdk.Entities.Enums;
 using TreePassBot2.PluginSdk.Interfaces;
 
 namespace TreePassBot2.BotEngine.Services;

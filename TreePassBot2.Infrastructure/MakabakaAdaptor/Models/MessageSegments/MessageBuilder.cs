@@ -1,3 +1,5 @@
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments;
+
 namespace TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
 
 /// <summary>

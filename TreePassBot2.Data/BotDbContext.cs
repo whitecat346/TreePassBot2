@@ -5,7 +5,7 @@ namespace TreePassBot2.Data;
 
 public class BotDbContext(DbContextOptions<BotDbContext> options) : DbContext(options)
 {
-    public DbSet<QqUser> Users { get; set; }
+    public DbSet<QqUserInfo> Users { get; set; }
     public DbSet<AuditRequestData> AuditRequests { get; set; }
     public DbSet<MessageLog> MessageLogs { get; set; }
     public DbSet<PluginState> PluginStates { get; set; }
@@ -16,7 +16,7 @@ public class BotDbContext(DbContextOptions<BotDbContext> options) : DbContext(op
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<QqUser>()
+        modelBuilder.Entity<QqUserInfo>()
                     .HasIndex(user => user.QqId)
                     .IsUnique();
 

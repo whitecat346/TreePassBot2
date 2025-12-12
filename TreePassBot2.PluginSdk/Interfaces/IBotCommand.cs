@@ -1,4 +1,4 @@
-using TreePassBot2.PluginSdk.Entities;
+using TreePassBot2.PluginSdk.Entities.Enums;
 
 namespace TreePassBot2.PluginSdk.Interfaces;
 

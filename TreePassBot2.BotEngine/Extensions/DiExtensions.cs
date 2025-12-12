@@ -11,7 +11,7 @@ public static class DiExtensions
 {
     public static IServiceCollection AddBotEngineServices(this IServiceCollection services)
     {
-        services.AddSingleton<PluginManager>()
+        services.AddSingleton<PluginManagerService>()
                 .AddSingleton<CommandContextImplFactory>()
                 .AddSingleton<MessageRouter>()
                 .AddSingleton<MessageArchiveService>()

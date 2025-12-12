@@ -1,4 +1,4 @@
-namespace TreePassBot2.Core.Entities;
+namespace TreePassBot2.Core.Entities.Enums;
 
 /// <summary>
 /// User role in a group.

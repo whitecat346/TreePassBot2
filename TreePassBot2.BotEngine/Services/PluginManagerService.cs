@@ -7,7 +7,7 @@ using TreePassBot2.PluginSdk.Interfaces;
 
 namespace TreePassBot2.BotEngine.Services;
 
-public class PluginManager(IServiceProvider services, ILogger<PluginManager> logger) : IAsyncDisposable
+public class PluginManagerService(IServiceProvider services, ILogger<PluginManagerService> logger) : IAsyncDisposable
 {
     private readonly ConcurrentDictionary<string, PluginSupervisor> _activePlugins = [];
 
@@ -21,7 +21,7 @@ public class PluginManager(IServiceProvider services, ILogger<PluginManager> log
     /// <exception cref="FailedToActivatePluginException">Throws if failed to activate a plugin.</exception>
     public async Task LoadPluginAsync(string dllPath)
     {
-        var alc = new PluginLoadContext(dllPath);
+        var alc = new PluginLoadAssemblyContext(dllPath);
         var assembly = alc.LoadFromAssemblyPath(dllPath);
         var pluginType = assembly.GetTypes().FirstOrDefault(t => typeof(IBotPlugin).IsAssignableFrom(t))
                       ?? throw new InvalidOperationException(
@@ -32,7 +32,7 @@ public class PluginManager(IServiceProvider services, ILogger<PluginManager> log
             throw new FailedToActivatePluginException($"Fialed to activate plugin: {pluginType}");
         }
 
-        var context = new PluginContextImpl(pluginInstance.Meta.Id, services);
+        var context = new PluginLoadingLoadingContextImpl(pluginInstance.Meta.Id, services);
 
         try
         {
@@ -106,31 +106,31 @@ public class PluginManager(IServiceProvider services, ILogger<PluginManager> log
     /// Dispatch command to appropriate plugin.
     /// </summary>
     /// <param name="cmdTrigger">Matched command.</param>
-    /// <param name="msgCtx">Message context.</param>
-    public async Task DispatchCommandAsync(string cmdTrigger, ICommandContext msgCtx)
+    /// <param name="cmdCtx">Message context.</param>
+    public async Task DispatchCommandAsync(string cmdTrigger, ICommandContext cmdCtx)
     {
         if (!_commandRouteTable.TryGetValue(cmdTrigger, out var value))
         {
             var replyMsg = new MessageBuilder().AddText("Command not found");
 
-            await msgCtx.ReplyAsync(replyMsg).ConfigureAwait(false);
+            await cmdCtx.ReplyAsync(replyMsg).ConfigureAwait(false);
             return;
         }
 
-        await value.Supervisor.SafeExecuteCommandAsync(value.Command, msgCtx).ConfigureAwait(false);
+        await value.Supervisor.SafeExecuteCommandAsync(value.Command, cmdCtx).ConfigureAwait(false);
 
         logger.LogTrace("Issued command {CommandName} from {GroupId} by {UserId}",
-                        value.Command.Trigger, msgCtx.GroupId, msgCtx.SenderId);
+                        value.Command.Trigger, cmdCtx.GroupId, cmdCtx.SenderId);
     }
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
+        GC.SuppressFinalize(this);
+
         foreach (var activePlugin in _activePlugins)
         {
             await activePlugin.Value.UnloadAsync().ConfigureAwait(false);
         }
-
-        GC.SuppressFinalize(this);
     }
 }

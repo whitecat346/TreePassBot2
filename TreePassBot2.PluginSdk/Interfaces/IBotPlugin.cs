@@ -4,7 +4,7 @@ public interface IBotPlugin
 {
     PluginMeta Meta { get; }
 
-    Task OnLoadedAsync(IPluginContext context);
+    Task OnLoadedAsync(IPluginLoadingContext loadingContext);
 
     Task OnUnloadedAsync();
 }

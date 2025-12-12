@@ -3,7 +3,7 @@ using System.Runtime.Loader;
 
 namespace TreePassBot2.BotEngine.Plugins;
 
-public class PluginLoadContext(string pluginPath) : AssemblyLoadContext(isCollectible: true)
+public class PluginLoadAssemblyContext(string pluginPath) : AssemblyLoadContext(isCollectible: true)
 {
     private readonly AssemblyDependencyResolver _resolver = new(pluginPath);
 

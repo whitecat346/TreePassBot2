@@ -10,7 +10,7 @@ public class MessageArchiveService(
     IServiceProvider serviceProvider,
     ILogger<MessageArchiveService> logger)
 {
-    public async Task ArchiveUserMessageAsync(ulong groupId, ulong userId, ulong operatorId, string reason,
+    public async Task ArchiveUserMessageAsync(ulong groupId, ulong operatorId, long startMessageId, string reason,
                                               TimeSpan lookBackTime)
     {
         await using var scope = serviceProvider.CreateAsyncScope();
@@ -22,7 +22,7 @@ public class MessageArchiveService(
         var recentLogs = await db.MessageLogs
                                  .AsNoTracking()
                                  .Where(msg => msg.GroupId == groupId &&
-                                               msg.UserId == userId &&
+                                               msg.MessageId <= startMessageId &&
                                                msg.SendAt >= since)
                                  .ToListAsync().ConfigureAwait(false);
 
@@ -49,7 +49,7 @@ public class MessageArchiveService(
 
         await db.SaveChangesAsync().ConfigureAwait(false);
 
-        logger.LogInformation("Archived {Count} messages for user {User} in group {Group}.\t\n Reason: {Reason}",
-                              recentLogs.Count, userId, groupId, reason);
+        logger.LogInformation("Archived {Count} messages before {MessageId} in group {Group}.\t\n Reason: {Reason}",
+                              recentLogs.Count, startMessageId, groupId, reason);
     }
 }

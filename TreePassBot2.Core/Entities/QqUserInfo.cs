@@ -1,11 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+using TreePassBot2.Core.Entities.Enums;
 
 namespace TreePassBot2.Core.Entities;
 
 /// <summary>
 /// A QQ user entity.
 /// </summary>
-public record QqUser
+public record QqUserInfo
 {
     /// <summary>
     /// The unique identifier for the user.

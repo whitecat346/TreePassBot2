@@ -1,5 +1,7 @@
 using Makabaka;
+using TreePassBot2.Core.Entities;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments;
 
 namespace TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 
@@ -48,6 +50,9 @@ public interface ICommunicationService
     /// <param name="forwardId">合并转发ID</param>
     /// <returns>合并转发的消息列表</returns>
     Task<List<Message>> GetForwardMessageAsync(string forwardId);
+
+    Task<QqUserInfo> GetGroupMemberInfoAsync(ulong groupId, ulong userId);
+    Task<IEnumerable<QqUserInfo>> GetGroupMemberListAsync(ulong groupId);
 
     Task ConnectAsync();
 

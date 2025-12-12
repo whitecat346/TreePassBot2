@@ -1,14 +1,14 @@
 using Makabaka.Messages;
-using TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
-using AtSegment = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.AtSegment;
-using FaceSegment = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.FaceSegment;
-using ForwardSegment = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.ForwardSegment;
-using ImageSegment = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.ImageSegment;
-using Message = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.Message;
-using PokeSegment = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.PokeSegment;
-using ReplySegment = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.ReplySegment;
-using TextSegment = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.TextSegment;
-using VideoSegment = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.VideoSegment;
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments;
+using AtSegment = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments.AtSegment;
+using FaceSegment = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments.FaceSegment;
+using ForwardSegment = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments.ForwardSegment;
+using ImageSegment = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments.ImageSegment;
+using Message = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments.Message;
+using PokeSegment = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments.PokeSegment;
+using ReplySegment = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments.ReplySegment;
+using TextSegment = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments.TextSegment;
+using VideoSegment = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments.VideoSegment;
 
 namespace TreePassBot2.Infrastructure.MakabakaAdaptor.Converters;
 
@@ -25,15 +25,7 @@ public static class MessageConverter
     public static Makabaka.Messages.Message ConvertToMakabakaMessage(Message message)
     {
         var makabakaMessage = new Makabaka.Messages.Message();
-
-        foreach (var segment in message)
-        {
-            var makabakaSegment = ConvertToMakabakaSegment(segment);
-            if (makabakaSegment is not null)
-            {
-                makabakaMessage.Add(makabakaSegment);
-            }
-        }
+        makabakaMessage.AddRange(message.Select(ConvertToMakabakaSegment).OfType<Segment>());
 
         return makabakaMessage;
     }
@@ -43,13 +35,13 @@ public static class MessageConverter
     /// </summary>
     /// <param name="message">Makabaka的消息对象</param>
     /// <returns>TreePassBot2的消息对象</returns>
-    public static Message ConvertToTreePassBotMessage(Makabaka.Messages.Message message)
+    public static Message ConvertToBotMessage(Makabaka.Messages.Message message)
     {
         var treePassBotMessage = new Message();
 
         foreach (var segment in message)
         {
-            var treePassBotSegment = ConvertToTreePassBotSegment(segment);
+            var treePassBotSegment = ConvertToBotSegment(segment);
             if (treePassBotSegment != null)
             {
                 treePassBotMessage.Add(treePassBotSegment);
@@ -83,7 +75,7 @@ public static class MessageConverter
     /// </summary>
     /// <param name="segment">Makabaka的消息段</param>
     /// <returns>TreePassBot2的消息段</returns>
-    private static MessageSegment? ConvertToTreePassBotSegment(Segment segment)
+    private static MessageSegment? ConvertToBotSegment(Segment segment)
     {
         switch (segment)
         {
@@ -91,32 +83,23 @@ public static class MessageConverter
                 return new TextSegment(textSegment.Data.Text);
 
             case Makabaka.Messages.AtSegment atSegment:
-                ulong userId = 0;
-                if (atSegment.Data.QQ != "all")
-                {
-                    ulong.TryParse(atSegment.Data.QQ, out userId);
-                }
+                if (atSegment.Data.QQ == "all")
+                    return new AtSegment(0, atSegment.Data.Name);
 
+                _ = ulong.TryParse(atSegment.Data.QQ, out var userId);
                 return new AtSegment(userId, atSegment.Data.Name);
 
+            case Makabaka.Messages.ReplySegment replySegment:
+                return long.TryParse(replySegment.Data.Id, out var messageId)
+                    ? new ReplySegment(messageId)
+                    : null;
             case Makabaka.Messages.FaceSegment faceSegment:
-                if (int.TryParse(faceSegment.Data.Id, out var faceId))
-                {
-                    return new FaceSegment(faceId);
-                }
-
-                return null;
+                return int.TryParse(faceSegment.Data.Id, out var faceId)
+                    ? new FaceSegment(faceId)
+                    : null;
 
             case Makabaka.Messages.ImageSegment imageSegment:
                 return new ImageSegment(imageSegment.Data.File);
-
-            case Makabaka.Messages.ReplySegment replySegment:
-                if (long.TryParse(replySegment.Data.Id, out var messageId))
-                {
-                    return new ReplySegment(messageId);
-                }
-
-                return null;
 
             case Makabaka.Messages.PokeSegment pokeSegment:
                 return new PokeSegment(0, pokeSegment.Data.Type, pokeSegment.Data.Id);
@@ -128,7 +111,6 @@ public static class MessageConverter
                 return new VideoSegment(videoSegment.Data.File);
 
             default:
-                // 未知的消息段类型，返回null
                 return null;
         }
     }

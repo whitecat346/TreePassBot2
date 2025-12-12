@@ -1,4 +1,4 @@
-namespace TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
+namespace TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments;
 
 /// <summary>
 /// 合并转发消息段

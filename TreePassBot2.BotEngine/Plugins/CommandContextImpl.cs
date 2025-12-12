@@ -9,6 +9,8 @@ namespace TreePassBot2.BotEngine.Plugins;
 
 public class CommandContextImpl(ICommunicationService communicationService) : ICommandContext
 {
+    private ICommunicationService CommunicationService { get; } = communicationService;
+
     /// <inheritdoc />
     public string SenderNickName { get; init; }
 
@@ -22,15 +24,21 @@ public class CommandContextImpl(ICommunicationService communicationService) : IC
     public long MessageId { get; init; }
 
     /// <inheritdoc />
-    public Infrastructure.MakabakaAdaptor.Models.Message RawMessage { get; init; }
+    public Infrastructure.MakabakaAdaptor.Models.MessageSegments.Message RawMessage { get; init; }
 
     /// <inheritdoc />
     public required string[] Args { get; init; }
 
     /// <inheritdoc />
-    public Task ReplyAsync(Infrastructure.MakabakaAdaptor.Models.Message msg)
+    public required IPluginStateStorage State { get; init; }
+
+    /// <inheritdoc />
+    public required IBotApi BotApi { get; init; }
+
+    /// <inheritdoc />
+    public Task ReplyAsync(Infrastructure.MakabakaAdaptor.Models.MessageSegments.Message msg)
     {
-        return communicationService.SendGroupMessageAsync(GroupId, msg);
+        return CommunicationService.SendGroupMessageAsync(GroupId, msg);
     }
 
     /// <inheritdoc />

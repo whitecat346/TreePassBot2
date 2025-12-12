@@ -1,4 +1,4 @@
-namespace TreePassBot2.PluginSdk.Entities;
+namespace TreePassBot2.PluginSdk.Entities.Enums;
 
 public enum UserRole
 {

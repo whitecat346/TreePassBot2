@@ -7,7 +7,7 @@ namespace TreePassBot2.BotEngine.Services;
 
 public class PluginSupervisor(
     IBotPlugin plugin,
-    PluginLoadContext loadCtx,
+    PluginLoadAssemblyContext loadAssemblyCtx,
     ILogger logger)
 {
     private int _errorCount;
@@ -75,7 +75,7 @@ public class PluginSupervisor(
         }
         finally
         {
-            loadCtx.Unload();
+            loadAssemblyCtx.Unload();
         }
     }
 }

@@ -1,5 +1,5 @@
-using TreePassBot2.Core.Entities;
-using TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
+using TreePassBot2.Core.Entities.Enums;
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments;
 
 namespace TreePassBot2.Infrastructure.MakabakaAdaptor;
 
