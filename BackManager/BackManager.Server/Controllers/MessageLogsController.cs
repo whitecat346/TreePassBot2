@@ -1,145 +1,148 @@
 using BackManager.Server.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Immutable;
+using TreePassBot2.Data;
 
-namespace BackManager.Server.Controllers
+namespace BackManager.Server.Controllers;
+
+/// <summary>
+/// 消息日志控制器
+/// </summary>
+/// <remarks>
+/// 消息日志控制器构造函数
+/// </remarks>
+/// <param name="dbContext">数据库上下文</param>
+[ApiController]
+[Route("api/messages")]
+public class MessageLogsController(
+    BotDbContext dbContext,
+    ILogger<MessageLogsController> logger) : ControllerBase
 {
     /// <summary>
-    /// 消息日志控制器
+    /// 获取消息日志列表
     /// </summary>
-    [ApiController]
-    [Route("api/messages")]
-    public class MessageLogsController : ControllerBase
+    /// <param name="groupId">群组ID（可选）</param>
+    /// <param name="startTime">开始时间（可选）</param>
+    /// <param name="endTime">结束时间（可选）</param>
+    /// <param name="beforeId">分页游标（可选）</param>
+    /// <param name="limit">每页数量（可选，默认20）</param>
+    /// <returns>消息日志列表</returns>
+    [HttpGet]
+    public async Task<IActionResult> GetMessageLogs(
+        [FromQuery] string? groupId,
+        [FromQuery] string? startTime,
+        [FromQuery] string? endTime,
+        [FromQuery] string? beforeId,
+        [FromQuery] int limit = 20)
     {
-        /// <summary>
-        /// 消息日志模型
-        /// </summary>
-        private class MessageLog
+        try
         {
-            public string Id { get; set; }
-            public string GroupId { get; set; }
-            public string GroupName { get; set; }
-            public string UserId { get; set; }
-            public string Username { get; set; }
-            public string Content { get; set; }
-            public string SendTime { get; set; }
-            public bool IsRecalled { get; set; }
-            public string? RecalledBy { get; set; }
-            public string? RecalledAt { get; set; }
-        }
+            var query = dbContext.MessageLogs.AsQueryable();
 
-        /// <summary>
-        /// 获取消息日志列表
-        /// </summary>
-        /// <returns>消息日志列表</returns>
-        [HttpGet]
-        public IActionResult GetMessageLogs()
-        {
-            // 模拟消息日志数据
-            List<MessageLog> logs =
-            [
-                new()
-                {
-                    Id = "1",
-                    GroupId = "group1",
-                    GroupName = "测试群组1",
-                    UserId = "user1",
-                    Username = "用户1",
-                    Content = "大家好！",
-                    SendTime = DateTime.UtcNow.AddHours(-1).ToString("o"),
-                    IsRecalled = false,
-                    RecalledBy = null,
-                    RecalledAt = null
-                },
-
-                new()
-                {
-                    Id = "2",
-                    GroupId = "group1",
-                    GroupName = "测试群组1",
-                    UserId = "user2",
-                    Username = "用户2",
-                    Content = "你好！",
-                    SendTime = DateTime.UtcNow.AddMinutes(-50).ToString("o"),
-                    IsRecalled = false,
-                    RecalledBy = null,
-                    RecalledAt = null
-                },
-
-                new()
-                {
-                    Id = "3",
-                    GroupId = "group2",
-                    GroupName = "测试群组2",
-                    UserId = "user3",
-                    Username = "用户3",
-                    Content = "测试消息",
-                    SendTime = DateTime.UtcNow.AddHours(-2).ToString("o"),
-                    IsRecalled = true,
-                    RecalledBy = "user3",
-                    RecalledAt = DateTime.UtcNow.AddHours(-1.5).ToString("o")
-                }
-            ];
-
-            return Ok(ApiResponse<List<MessageLog>>.Ok(logs, "获取消息日志成功"));
-        }
-
-        /// <summary>
-        /// 搜索消息日志
-        /// </summary>
-        /// <param name="keyword">搜索关键词</param>
-        /// <param name="groupId">群组ID</param>
-        /// <param name="startTime">开始时间</param>
-        /// <param name="endTime">结束时间</param>
-        /// <returns>搜索结果</returns>
-        [HttpGet("search")]
-        public IActionResult SearchMessageLogs([FromQuery] string? keyword, [FromQuery] string? groupId,
-                                               [FromQuery] string? startTime, [FromQuery] string? endTime)
-        {
-            // 模拟搜索功能，返回相同的日志数据
-            var logs = new List<MessageLog>
+            if (!string.IsNullOrEmpty(groupId) && ulong.TryParse(groupId, out var groupIdValue))
             {
-                new()
-                {
-                    Id = "1",
-                    GroupId = "group1",
-                    GroupName = "测试群组1",
-                    UserId = "user1",
-                    Username = "用户1",
-                    Content = "大家好！",
-                    SendTime = DateTime.UtcNow.AddHours(-1).ToString("o"),
-                    IsRecalled = false,
-                    RecalledBy = null,
-                    RecalledAt = null
-                }
+                query = query.Where(m => m.GroupId == groupIdValue);
+            }
+
+            if (!string.IsNullOrEmpty(startTime) && DateTimeOffset.TryParse(startTime, out var startTimeValue))
+            {
+                query = query.Where(m => m.SendAt >= startTimeValue);
+            }
+
+            if (!string.IsNullOrEmpty(endTime) && DateTimeOffset.TryParse(endTime, out var endTimeValue))
+            {
+                query = query.Where(m => m.SendAt <= endTimeValue);
+            }
+
+            if (!string.IsNullOrEmpty(beforeId) && long.TryParse(beforeId, out var beforeIdValue))
+            {
+                query = query.Where(m => m.Id < beforeIdValue);
+            }
+
+            var messageLogs = await query
+                                   .OrderByDescending(m => m.Id)
+                                   .Take(limit + 1) // for check has more
+                                   .ToListAsync().ConfigureAwait(false);
+
+            var hasMore = messageLogs.Count > limit;
+            if (hasMore)
+            {
+                messageLogs.RemoveAt(messageLogs.Count - 1);
+            }
+
+            var logs = messageLogs.Select(m => new
+            {
+                Id = m.Id.ToString(),
+                GroupId = m.GroupId,
+                GroupName = m.GroupId,
+                UserId = m.UserId.ToString(),
+                Username = m.UserNickName ?? $"用户{m.UserId}",
+                Content = m.ContentText,
+                SendTime = m.SendAt.ToString("O"),
+                IsRecalled = m.IsWithdrawed,
+                RecalledBy = m.WithdrawedBy?.ToString(),
+                RecalledAt = string.Empty
+            }).ToImmutableList();
+
+            var response = new
+            {
+                items = logs,
+                hasMore = hasMore,
+                nextCursor = hasMore ? logs[^1].Id : string.Empty,
+                total = await dbContext.MessageLogs.CountAsync().ConfigureAwait(false)
             };
 
-            return Ok(ApiResponse<List<MessageLog>>.Ok(logs, "搜索消息日志成功"));
+            return Ok(ApiResponse<object>.Ok(response, "获取消息日志成功"));
         }
-
-        /// <summary>
-        /// 获取消息详情
-        /// </summary>
-        /// <param name="messageId">消息ID</param>
-        /// <returns>消息详情</returns>
-        [HttpGet("{messageId}")]
-        public IActionResult GetMessageDetail(string messageId)
+        catch (Exception ex)
         {
-            // 模拟消息详情数据
-            var log = new MessageLog
+            logger.LogError("Failed to get message log: {Error}", ex.Message);
+            return StatusCode(500, ApiResponse<object>.Error($"获取消息日志失败: {ex.Message}"));
+        }
+    }
+
+    /// <summary>
+    /// 获取消息详情
+    /// </summary>
+    /// <param name="messageId">消息ID</param>
+    /// <returns>消息详情</returns>
+    [HttpGet("{messageId}")]
+    public async Task<IActionResult> GetMessageDetail(string messageId)
+    {
+        try
+        {
+            if (!long.TryParse(messageId, out var id))
             {
-                Id = messageId,
-                GroupId = "group1",
-                GroupName = "测试群组1",
-                UserId = "user1",
-                Username = "用户1",
-                Content = "大家好！这是一条测试消息。",
-                SendTime = DateTime.UtcNow.AddHours(-1).ToString("o"),
-                IsRecalled = false,
-                RecalledBy = null,
-                RecalledAt = null
+                return BadRequest(ApiResponse<object>.Error("无效的消息ID"));
+            }
+
+            var messageLog = await dbContext.MessageLogs.FindAsync(id).ConfigureAwait(false);
+            if (messageLog == null)
+            {
+                return NotFound(ApiResponse<object>.Error("消息不存在"));
+            }
+
+            var log = new
+            {
+                Id = messageLog.Id.ToString(),
+                GroupId = messageLog.GroupId.ToString(),
+                GroupName = $"群组{messageLog.GroupId}",
+                UserId = messageLog.UserId.ToString(),
+                Username = messageLog.UserNickName ?? $"用户{messageLog.UserId}",
+                Content = messageLog.ContentText,
+                SendTime = messageLog.SendAt.ToString("o"),
+                IsRecalled = messageLog.IsWithdrawed,
+                RecalledBy = messageLog.WithdrawedBy?.ToString(),
+                RecalledAt = string.Empty
             };
 
-            return Ok(ApiResponse<MessageLog>.Ok(log, "获取消息详情成功"));
+            return Ok(ApiResponse<object>.Ok(log, "获取消息详情成功"));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("Failed to get message datails: {Error}", ex.Message);
+            return StatusCode(500, ApiResponse<object>.Error($"获取消息详情失败: {ex.Message}"));
         }
     }
 }

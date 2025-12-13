@@ -5,7 +5,7 @@ import type { InternalAxiosRequestConfig } from 'axios';
 
 // 创建axios实例
 const apiClient: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:5001/api',
+  baseURL: 'http://localhost:7248/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -190,6 +190,13 @@ export interface MessageLog {
   recalledAt: string | null;
 }
 
+export interface MessageLogResponse {
+  items: MessageLog[];
+  hasMore: boolean;
+  nextCursor: string | null;
+  total: number;
+}
+
 // 机器人状态 API
 export const getBotStatus = () => apiClient.get<ApiResponse<BotStatus>>('/bot/status');
 export const startBot = () => apiClient.post<ApiResponse<void>>('/bot/start');
@@ -217,8 +224,13 @@ export const approveAudit = (auditId: string) => apiClient.post<ApiResponse<void
 export const rejectAudit = (auditId: string) => apiClient.post<ApiResponse<void>>(`/audits/${auditId}/reject`);
 
 // 消息日志 API
-export const getMessageLogs = (params?: { groupId?: string; startTime?: string; endTime?: string; page?: number; pageSize?: number }) =>
-  apiClient.get<ApiResponse<{ items: MessageLog[]; total: number }>>('/messages', { params });
+export const getMessageLogs = (params?: {
+  groupId?: string;
+  startTime?: string;
+  endTime?: string;
+  beforeId?: string; // 基于ID的分页
+  limit?: number;
+}) => apiClient.get<ApiResponse<MessageLogResponse>>('/messages', { params });
 export const getMessageDetail = (messageId: string) => apiClient.get<ApiResponse<MessageLog>>(`/messages/${messageId}`);
 
 // 导出axios实例，方便在其他地方使用

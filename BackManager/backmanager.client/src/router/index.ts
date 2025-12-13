@@ -1,5 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import DashboardView from '../views/DashboardView.vue'
+import UserManagementView from '../views/UserManagementView.vue'
+import AuditView from '../views/AuditView.vue'
+import PluginManagementView from '../views/PluginManagementView.vue'
+import MessageLogView from '../views/MessageLogView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -16,7 +20,7 @@ const router = createRouter({
     {
       path: '/users',
       name: 'users',
-      component: () => import('../views/UserManagementView.vue'),
+      component: UserManagementView,
       meta: {
         title: '用户管理',
         icon: 'Users'
@@ -25,7 +29,7 @@ const router = createRouter({
     {
       path: '/audits',
       name: 'audits',
-      component: () => import('../views/AuditView.vue'),
+      component: AuditView,
       meta: {
         title: '审核记录',
         icon: 'FileText'
@@ -34,7 +38,7 @@ const router = createRouter({
     {
       path: '/plugins',
       name: 'plugins',
-      component: () => import('../views/PluginManagementView.vue'),
+      component: PluginManagementView,
       meta: {
         title: '插件中心',
         icon: 'Plug'
@@ -43,7 +47,7 @@ const router = createRouter({
     {
       path: '/logs',
       name: 'logs',
-      component: () => import('../views/MessageLogView.vue'),
+      component: MessageLogView,
       meta: {
         title: '消息日志',
         icon: 'Database'

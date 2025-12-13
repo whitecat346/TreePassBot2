@@ -222,7 +222,10 @@
   </div>
 </template>
 
-<script setup lang="ts">import { ref, computed, onMounted } from 'vue';
+<script setup lang="ts">defineOptions({
+  name: 'AuditView'
+});
+import { ref, computed, onMounted } from 'vue';
 import {
   getAuditRecords,
   approveAudit,
@@ -326,6 +329,9 @@ const fetchAuditRecords = async () => {
     if (response.data.success) {
       audits.value = response.data.data;
       auditTotal.value = response.data.data.length; // 实际项目中应该从API返回的total字段获取
+    } else {
+      // 当API返回success为false时，抛出错误
+      throw new Error(response.data.message || '获取审核记录失败');
     }
   } catch (error) {
     ElMessage.error('获取审核记录失败');
@@ -357,6 +363,9 @@ const handleApprove = async (audit: AuditRecord) => {
     if (response.data.success) {
       ElMessage.success('审核通过成功');
       fetchAuditRecords(); // 刷新列表
+    } else {
+      // 当API返回success为false时，抛出错误
+      throw new Error(response.data.message || '审核通过失败');
     }
   } catch (error) {
     ElMessage.error('审核通过失败');
@@ -371,6 +380,9 @@ const handleReject = async (audit: AuditRecord) => {
     if (response.data.success) {
       ElMessage.success('拒绝审核成功');
       fetchAuditRecords(); // 刷新列表
+    } else {
+      // 当API返回success为false时，抛出错误
+      throw new Error(response.data.message || '拒绝审核失败');
     }
   } catch (error) {
     ElMessage.error('拒绝审核失败');

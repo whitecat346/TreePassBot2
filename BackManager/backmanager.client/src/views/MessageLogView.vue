@@ -55,7 +55,7 @@
       <!-- 消息列表头部 -->
       <div class="message-list-header flex justify-between items-center pb-4 border-b border-gray-200 mb-4">
         <h3 class="text-lg font-medium text-gray-900">
-          消息日志 (共 {{ filteredMessages.length }} 条)
+          消息日志 (共 {{ totalMessages }} 条)
         </h3>
         <div class="text-sm text-gray-500">
           显示：
@@ -70,115 +70,142 @@
       </div>
 
       <!-- 消息列表内容 -->
-      <div v-if="loading" class="p-8">
-        <div class="flex items-center justify-center">
-          <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
-          <span class="ml-3 text-gray-500">加载中...</span>
+      <div ref="messageListRef"
+           class="discord-style-messages"
+           @scroll="handleScroll">
+        <!-- 加载更多指示器 -->
+        <div v-if="loadingMore"
+             class="flex justify-center items-center py-4 text-gray-500">
+          <el-icon class="mr-2 animate-spin"><Loading /></el-icon>
+          加载更多消息...
         </div>
-      </div>
 
-      <div v-else-if="filteredMessages.length > 0" class="discord-style-messages">
-        <!-- 按日期分组显示消息 -->
-        <div v-for="(dateGroup, date) in groupedMessages"
-             :key="date"
-             class="mb-8">
-          <!-- 日期分隔线 -->
-          <div class="flex items-center justify-center mb-4">
-            <div class="h-px bg-gray-200 flex-1"></div>
-            <span class="px-4 py-1 text-xs font-medium text-gray-500 bg-gray-100 rounded-full mx-4">
-              {{ formatDate(date) }}
-            </span>
-            <div class="h-px bg-gray-200 flex-1"></div>
-          </div>
+        <!-- 没有更多消息提示 -->
+        <div v-else-if="!hasMore && messages.length > 0"
+             class="flex justify-center items-center py-4 text-gray-500 text-sm">
+          没有更多历史消息了
+        </div>
 
-          <!-- 该日期下的消息 -->
-          <div class="space-y-4">
-            <div v-for="message in dateGroup"
-                 :key="message.id"
-                 class="message-item flex gap-3"
-                 :class="{ 'recalled-message': message.isRecalled }">
-              <!-- 头像 -->
-              <div class="message-avatar flex-shrink-0">
-                <Avatar :src="null"
-                        :username="message.username"
-                        size="sm"
-                        rounded />
-              </div>
+        <!-- 消息列表 -->
+        <div v-if="filteredMessages.length > 0"
+             class="messages-container">
+          <!-- 按日期分组显示消息 -->
+          <div v-for="(dateGroup, date) in groupedMessages"
+               :key="date"
+               class="mb-8">
+            <!-- 日期分隔线 -->
+            <div class="flex items-center justify-center mb-4">
+              <div class="h-px bg-gray-200 flex-1"></div>
+              <span class="px-4 py-1 text-xs font-medium text-gray-500 bg-gray-100 rounded-full mx-4">
+                {{ formatDate(date) }}
+              </span>
+              <div class="h-px bg-gray-200 flex-1"></div>
+            </div>
 
-              <!-- 消息内容 -->
-              <div class="message-content flex-1">
-                <!-- 消息头部：用户名和时间 -->
-                <div class="message-header flex items-center space-x-2 mb-1">
-                  <span class="message-username font-medium">{{ message.username }}</span>
-                  <span class="message-time text-xs text-gray-500">
-                    {{ formatTime(message.sendTime) }}
-                  </span>
-
-                  <!-- 撤回标记 -->
-                  <el-tag v-if="message.isRecalled"
-                          size="small"
-                          type="danger"
-                          class="ml-2">
-                    已撤回
-                  </el-tag>
+            <!-- 该日期下的消息 -->
+            <div class="space-y-4">
+              <div v-for="message in dateGroup"
+                   :key="message.id"
+                   class="message-item flex gap-3"
+                   :class="{ 'recalled-message': message.isRecalled }">
+                <!-- 头像 -->
+                <div class="message-avatar flex-shrink-0">
+                  <Avatar :src="null"
+                          :username="message.username"
+                          size="sm"
+                          rounded />
                 </div>
 
-                <!-- 消息文本 -->
-                <div class="message-text">
-                  <template v-if="message.isRecalled">
-                    <span class="text-gray-500 italic">
-                      此消息已被撤回
-                      <span v-if="message.recalledBy" class="ml-1">
-                        (操作者：{{ message.recalledBy }})
-                      </span>
+                <!-- 消息内容 -->
+                <div class="message-content flex-1">
+                  <!-- 消息头部：用户名和时间 -->
+                  <div class="message-header flex items-center space-x-2 mb-1">
+                    <span class="message-username font-medium">{{ message.username }}</span>
+                    <span class="message-time text-xs text-gray-500">
+                      {{ formatTime(message.sendTime) }}
                     </span>
-                  </template>
-                  <template v-else>
-                    <div class="whitespace-pre-wrap break-words">
-                      {{ message.content }}
-                    </div>
-                  </template>
-                </div>
 
-                <!-- 消息元信息 -->
-                <div class="message-meta mt-2 flex items-center space-x-4 text-xs text-gray-500">
-                  <span>ID: {{ message.id }}</span>
-                  <span>群聊: {{ message.groupName }}</span>
-                  <span>用户ID: {{ message.userId }}</span>
+                    <!-- 撤回标记 -->
+                    <el-tag v-if="message.isRecalled"
+                            size="small"
+                            type="danger"
+                            class="ml-2">
+                      已撤回
+                    </el-tag>
+                  </div>
+
+                  <!-- 消息文本 -->
+                  <div class="message-text">
+                    <template v-if="message.isRecalled">
+                      <span class="text-gray-500 italic">
+                        此消息已被撤回
+                        <span v-if="message.recalledBy" class="ml-1">
+                          (操作者：{{ message.recalledBy }})
+                        </span>
+                      </span>
+                    </template>
+                    <template v-else>
+                      <div class="whitespace-pre-wrap break-words">
+                        {{ message.content }}
+                      </div>
+                    </template>
+                  </div>
+
+                  <!-- 消息元信息 -->
+                  <div class="message-meta mt-2 flex items-center space-x-4 text-xs text-gray-500">
+                    <span>ID: {{ message.id }}</span>
+                    <span>群聊: {{ message.groupName }}</span>
+                    <span>用户ID: {{ message.userId }}</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- 空状态 -->
+        <div v-else-if="!loading"
+             class="p-12 text-center">
+          <EmptyState title="暂无消息日志"
+                      description="当前没有消息日志，或搜索条件过于严格"
+                      icon="Database" />
+        </div>
+
+        <!-- 加载中状态 -->
+        <div v-else
+             class="p-8">
+          <div class="flex items-center justify-center">
+            <el-icon class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></el-icon>
+            <span class="ml-3 text-gray-500">加载中...</span>
+          </div>
+        </div>
       </div>
 
-      <!-- 空状态 -->
-      <div v-else class="p-12">
-        <EmptyState title="暂无消息日志"
-                    description="当前没有消息日志，或搜索条件过于严格"
-                    icon="Database" />
-      </div>
-
-      <!-- 分页 -->
-      <div v-if="!loading && filteredMessages.length > 0" class="p-4 border-t border-gray-200 mt-6">
-        <el-pagination v-model:current-page="currentPage"
-                       v-model:page-size="pageSize"
-                       :page-sizes="[10, 20, 50, 100]"
-                       :total="messages.length"
-                       layout="total, sizes, prev, pager, next, jumper"
-                       @size-change="handlePageSizeChange"
-                       @current-change="handlePageChange" />
+      <!-- 自动滚动到底部按钮 -->
+      <div v-if="!isAtBottom && messages.length > 0"
+           class="fixed bottom-8 right-8">
+        <el-button type="primary"
+                   size="small"
+                   circle
+                   @click="scrollToBottom"
+                   :icon="ArrowDownBold">
+          回到底部
+        </el-button>
       </div>
     </el-card>
   </div>
 </template>
 
-<script setup lang="ts">import { ref, computed, onMounted } from 'vue';
+<script setup lang="ts">defineOptions({
+  name: 'MessageLogView'
+});
+import { ref, computed, onMounted, watch, nextTick, onBeforeUnmount } from 'vue';
 import {
   getMessageLogs,
   type MessageLog
 } from '@/services/api';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElIcon } from 'element-plus';
+import { Loading, ArrowDownBold } from '@element-plus/icons-vue';
 
 // 导入通用组件
 import Avatar from '../components/common/BaseAvatar.vue';
@@ -187,8 +214,14 @@ import EmptyState from '../components/common/EmptyState.vue';
 // 响应式数据
 const messages = ref<MessageLog[]>([]);
 const loading = ref(true);
-const currentPage = ref(1);
-const pageSize = ref(20);
+const loadingMore = ref(false);
+const hasMore = ref(true);
+const totalMessages = ref(0);
+const nextCursor = ref<string | null>(null);
+const messageListRef = ref<HTMLElement | null>(null);
+const isAtBottom = ref(true);
+const autoScrollEnabled = ref(true);
+const lastScrollTop = ref(0);
 
 // 筛选条件
 const filterGroupId = ref('');
@@ -202,18 +235,6 @@ const groups = ref([
   { id: '2', name: '群组2' },
   { id: '3', name: '群组3' }
 ]);
-
-// 按日期分组的消息
-const groupedMessages = computed(() => {
-  return filteredMessages.value.reduce((groups, message) => {
-    const date = new Date(message.sendTime).toISOString().split('T')[0] || 'unknown';
-    if (!groups[date]) {
-      groups[date] = [];
-    }
-    groups[date].push(message);
-    return groups;
-  }, {} as Record<string, MessageLog[]>);
-});
 
 // 过滤后的消息
 const filteredMessages = computed(() => {
@@ -246,6 +267,18 @@ const filteredMessages = computed(() => {
   });
 });
 
+// 按日期分组的消息
+const groupedMessages = computed(() => {
+  return filteredMessages.value.reduce((groups, message) => {
+    const date = new Date(message.sendTime).toISOString().split('T')[0] || 'unknown';
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(message);
+    return groups;
+  }, {} as Record<string, MessageLog[]>);
+});
+
 // 格式化日期
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -266,37 +299,96 @@ const formatTime = (dateString: string) => {
   });
 };
 
+// 滚动到底部
+const scrollToBottom = () => {
+  const container = messageListRef.value;
+  if (container) {
+    container.scrollTop = container.scrollHeight;
+    isAtBottom.value = true;
+  }
+};
+
+// 检查是否在底部
+const checkIsAtBottom = () => {
+  const container = messageListRef.value;
+  if (container) {
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    isAtBottom.value = scrollHeight - scrollTop - clientHeight < 100; // 100px tolerance
+  }
+};
+
 // 获取消息日志
-const fetchMessageLogs = async () => {
+const fetchMessageLogs = async (isLoadMore = false) => {
   try {
-    loading.value = true;
+    if (isLoadMore) {
+      if (!hasMore.value || loadingMore.value) return;
+      loadingMore.value = true;
+    } else {
+      loading.value = true;
+      messages.value = [];
+      nextCursor.value = null;
+      hasMore.value = true;
+    }
 
     // 构建请求参数
     const params = {
       groupId: filterGroupId.value,
       startTime: '',
       endTime: '',
-      page: currentPage.value,
-      pageSize: pageSize.value
+      beforeId: isLoadMore && nextCursor.value ? nextCursor.value : undefined,
+      limit: 20 // 默认加载20条
     };
 
     const response = await getMessageLogs(params);
     if (response.data.success) {
-      messages.value = response.data.data.items;
-      // 实际项目中应该从API返回的total字段获取
-      // messageTotal.value = response.data.data.total;
+      const newMessages = response.data.data.items;
+
+      // 增量加载，避免重复
+      if (isLoadMore) {
+        // 过滤掉已存在的消息
+        const existingIds = new Set(messages.value.map(msg => msg.id));
+        const uniqueMessages = newMessages.filter(msg => !existingIds.has(msg.id));
+        messages.value = [...uniqueMessages, ...messages.value];
+      } else {
+        messages.value = newMessages;
+      }
+
+      hasMore.value = response.data.data.hasMore;
+      nextCursor.value = response.data.data.nextCursor;
+      totalMessages.value = response.data.data.total;
+
+      // 如果是初始加载，滚动到底部
+      if (!isLoadMore) {
+        await nextTick();
+        scrollToBottom();
+      }
     }
   } catch (error) {
     ElMessage.error('获取消息日志失败');
     console.error('获取消息日志失败:', error);
   } finally {
     loading.value = false;
+    loadingMore.value = false;
+  }
+};
+
+// 处理滚动事件
+const handleScroll = () => {
+  const container = messageListRef.value;
+  if (!container) return;
+
+  const { scrollTop } = container;
+  lastScrollTop.value = scrollTop;
+  checkIsAtBottom();
+
+  // 滚动到顶部边界，加载更多消息
+  if (scrollTop <= 100 && hasMore.value && !loadingMore.value) {
+    fetchMessageLogs(true);
   }
 };
 
 // 处理搜索
 const handleSearch = () => {
-  currentPage.value = 1;
   fetchMessageLogs();
 };
 
@@ -306,27 +398,36 @@ const handleReset = () => {
   filterIncludeRecalled.value = true;
   filterKeyword.value = '';
   displayMode.value = 'all';
-  currentPage.value = 1;
   fetchMessageLogs();
 };
 
-// 处理分页大小变化
-const handlePageSizeChange = (size: number) => {
-  pageSize.value = size;
-  currentPage.value = 1;
-  fetchMessageLogs();
-};
-
-// 处理页码变化
-const handlePageChange = (page: number) => {
-  currentPage.value = page;
-  fetchMessageLogs();
-};
+// 监听消息变化，自动滚动到底部
+watch(messages, (newVal, oldVal) => {
+  // 只有当自动滚动启用且当前在底部时，才自动滚动
+  if (autoScrollEnabled.value && isAtBottom.value && newVal.length > oldVal.length) {
+    nextTick(() => scrollToBottom());
+  }
+});
 
 // 组件挂载时初始化
 onMounted(() => {
   fetchMessageLogs();
-});</script>
+  // 添加滚动事件监听
+  const container = messageListRef.value;
+  if (container) {
+    container.addEventListener('scroll', handleScroll, { passive: true });
+  }
+});
+
+// 组件卸载前清理
+onBeforeUnmount(() => {
+  // 移除滚动事件监听
+  const container = messageListRef.value;
+  if (container) {
+    container.removeEventListener('scroll', handleScroll);
+  }
+});
+</script>
 
 <style scoped>
   .message-log-container {

@@ -7,12 +7,16 @@
     <UserSecretsId>ba0ba282-6d8c-4de7-bb74-18bc6c806da7</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..</DockerfileContext>
-	  <SpaRoot>..\backmanager.client\</SpaRoot>
+
+  </PropertyGroup>
+
     <!-- SpaProxy Configuration -->
+    <PropertyGroup>
+        <SpaRoot>..\backmanager.client\</SpaRoot>
 	  <SpaProxyServerUrl Condition=" '$(SpaProxyServerUrl)' == '' ">https://localhost:5201</SpaProxyServerUrl>
 	  <SpaProxyLaunchCommand Condition=" '$(SpaProxyLaunchCommand)' == '' ">npm run dev</SpaProxyLaunchCommand>
     <!-- Enable SpaProxy in development environment -->
-    <SpaProxyEnabled>$(ASPNETCORE_ENVIRONMENT) == Development</SpaProxyEnabled>
+      <SpaProxyEnabled>$(ASPNETCORE_ENVIRONMENT) == Development</SpaProxyEnabled>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,7 +31,7 @@
     <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
   </ItemGroup>
-	
+
   <ItemGroup>
     <ProjectReference Include="..\..\TreePassBot2.BotEngine\TreePassBot2.BotEngine.csproj" />
     <ProjectReference Include="..\..\TreePassBot2.Core\TreePassBot2.Core.csproj" />
@@ -39,16 +43,16 @@
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
-	
+
   <ItemGroup>
     <Folder Include="Controllers\" />
   </ItemGroup>
-	
+
 	<!-- 生产环境构建脚本 -->
   <Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build" />
-    
+
     <ItemGroup>
       <DistFiles Include="$(SpaRoot)dist\**" />
       <ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">

@@ -3,7 +3,7 @@ using TreePassBot2.BotEngine.Extensions;
 using TreePassBot2.BotEngine.Services;
 using TreePassBot2.Data;
 
-namespace TreePassBot2.Extensions;
+namespace BackManager.Server.Extensions;
 
 public static class ServiceCollectionExtensions
 {

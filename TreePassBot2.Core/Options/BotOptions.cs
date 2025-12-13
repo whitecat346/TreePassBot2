@@ -8,4 +8,6 @@ public record BotOptions
     public ulong OwnerId { get; set; }
     public ulong AuditGroupId { get; set; }
     public List<ulong> MainGroupIds { get; set; } = [];
+
+    public string PluginDir { get; set; } = "./plugins";
 }

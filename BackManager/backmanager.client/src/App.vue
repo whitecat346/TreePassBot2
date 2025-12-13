@@ -7,22 +7,12 @@ import Header from './components/Header.vue';</script>
     <div class="flex-1 flex flex-col min-w-0">
       <Header />
       <main class="flex-1 overflow-auto p-6 relative">
-        <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </router-view>
+        <router-view />
       </main>
     </div>
   </div>
 </template>
 
 <style>
-  .fade-enter-active, .fade-leave-active {
-    transition: opacity 0.15s ease;
-  }
-
-  .fade-enter-from, .fade-leave-to {
-    opacity: 0;
-  }
+/* 移除Transition相关样式 */
 </style>

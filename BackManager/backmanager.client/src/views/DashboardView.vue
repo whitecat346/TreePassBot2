@@ -140,7 +140,10 @@
   </div>
 </template>
 
-<script setup lang="ts">import { ref, onMounted } from 'vue';
+<script setup lang="ts">defineOptions({
+  name: 'DashboardView'
+});
+import { ref, onMounted, onUnmounted } from 'vue';
 import {
   getBotStatus,
   startBot,
@@ -168,6 +171,9 @@ const serverStatus = ref<ServerStatus>({
   timestamp: new Date().toISOString()
 });
 
+// 定时器ID
+const timerId = ref<number | null>(null);
+
 // 机器人配置信息（模拟数据，后续从API获取）
 const botConfig = ref({
   name: 'TreePassBot',
@@ -187,11 +193,14 @@ const getProgressColor = (percentage: number) => {
 // 获取机器人状态
 const fetchBotStatus = async () => {
   try {
-        const response = await getBotStatus();
-        if (response.data.success) {
-            botStatus.value = response.data.data;
-        }
-    } catch {
+    const response = await getBotStatus();
+    if (response.data.success) {
+      botStatus.value = response.data.data;
+    } else {
+      // 当API返回success为false时，抛出错误
+      throw new Error(response.data.message || '获取机器人状态失败');
+    }
+  } catch {
     ElMessage.error('获取机器人状态失败');
   }
 };
@@ -199,11 +208,14 @@ const fetchBotStatus = async () => {
 // 获取服务器状态
 const fetchServerStatus = async () => {
   try {
-        const response = await getServerStatus();
-        if (response.data.success) {
-            serverStatus.value = response.data.data;
-        }
-    } catch {
+    const response = await getServerStatus();
+    if (response.data.success) {
+      serverStatus.value = response.data.data;
+    } else {
+      // 当API返回success为false时，抛出错误
+      throw new Error(response.data.message || '获取服务器状态失败');
+    }
+  } catch {
     ElMessage.error('获取服务器状态失败');
   }
 };
@@ -211,12 +223,15 @@ const fetchServerStatus = async () => {
 // 启动机器人
 const handleStart = async () => {
   try {
-        const response = await startBot();
-        if (response.data.success) {
-            ElMessage.success('机器人启动成功');
-            fetchBotStatus();
-        }
-    } catch {
+    const response = await startBot();
+    if (response.data.success) {
+      ElMessage.success('机器人启动成功');
+      fetchBotStatus();
+    } else {
+      // 当API返回success为false时，抛出错误
+      throw new Error(response.data.message || '启动失败');
+    }
+  } catch {
     ElMessage.error('启动失败');
   }
 };
@@ -224,12 +239,15 @@ const handleStart = async () => {
 // 停止机器人
 const handleStop = async () => {
   try {
-        const response = await stopBot();
-        if (response.data.success) {
-            ElMessage.success('机器人已停止');
-            fetchBotStatus();
-        }
-    } catch {
+    const response = await stopBot();
+    if (response.data.success) {
+      ElMessage.success('机器人已停止');
+      fetchBotStatus();
+    } else {
+      // 当API返回success为false时，抛出错误
+      throw new Error(response.data.message || '停止失败');
+    }
+  } catch {
     ElMessage.error('停止失败');
   }
 };
@@ -238,8 +256,8 @@ const handleStop = async () => {
 const initData = async () => {
   try {
     loading.value = true;
-    // 并行请求数据
-    await Promise.all([
+    // 并行请求数据，使用Promise.allSettled确保所有请求完成后再设置loading为false
+    await Promise.allSettled([
       fetchBotStatus(),
       fetchServerStatus()
     ]);
@@ -255,10 +273,18 @@ onMounted(() => {
   initData();
 
   // 启动定时刷新（每30秒）
-  window.setInterval(() => {
+  timerId.value = window.setInterval(() => {
     fetchBotStatus();
     fetchServerStatus();
   }, 30000);
+});
+
+// 组件卸载时清理定时器
+onUnmounted(() => {
+  if (timerId.value) {
+    window.clearInterval(timerId.value);
+    timerId.value = null;
+  }
 });</script>
 
 <style scoped>

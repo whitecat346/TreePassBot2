@@ -1,39 +1,43 @@
 using BackManager.Server.Models;
 using Microsoft.AspNetCore.Mvc;
+using TreePassBot2.BotEngine.Services;
+using TreePassBot2.Data;
 
-namespace BackManager.Server.Controllers
+namespace BackManager.Server.Controllers;
+
+/// <summary>
+/// 插件管理控制器
+/// </summary>
+/// <remarks>
+/// 插件管理控制器构造函数
+/// </remarks>
+/// <param name="pluginManager">插件管理服务</param>
+/// <param name="dbContext">数据库上下文</param>
+[ApiController]
+[Route("api/[controller]")]
+public class PluginsController(
+    PluginManagerService pluginManager,
+    BotDbContext dbContext,
+    ILogger<PluginsController> logger) : ControllerBase
 {
     /// <summary>
-    /// 插件管理控制器
+    /// 获取插件列表
     /// </summary>
-    [ApiController]
-    [Route("api/[controller]")]
-    public class PluginsController : ControllerBase
+    /// <returns>插件列表</returns>
+    [HttpGet]
+    public async Task<IActionResult> GetPlugins()
     {
-        /// <summary>
-        /// 插件模型
-        /// </summary>
-        private record Plugin
+        try
         {
-            public required string Id { get; set; }
-            public required string Name { get; set; }
-            public required string Description { get; set; }
-            public bool IsEnabled { get; set; }
-            public required string Status { get; set; }
-            public required string Version { get; set; }
-        }
+            // 从数据库获取插件状态
+            var pluginStates = dbContext.PluginStates
+                                        .ToList();
 
-        /// <summary>
-        /// 获取插件列表
-        /// </summary>
-        /// <returns>插件列表</returns>
-        [HttpGet]
-        public IActionResult GetPlugins()
-        {
-            // 模拟插件数据
-            var plugins = new List<Plugin>
+            // 目前PluginManagerService没有提供获取插件列表的方法，这里使用模拟数据
+            // 实际项目中应该扩展PluginManagerService，添加获取插件列表的方法
+            var plugins = new List<object>
             {
-                new()
+                new
                 {
                     Id = "1",
                     Name = "测试插件1",
@@ -42,7 +46,7 @@ namespace BackManager.Server.Controllers
                     Status = "Running",
                     Version = "1.0.0"
                 },
-                new()
+                new
                 {
                     Id = "2",
                     Name = "测试插件2",
@@ -51,7 +55,7 @@ namespace BackManager.Server.Controllers
                     Status = "Disabled",
                     Version = "2.0.0"
                 },
-                new()
+                new
                 {
                     Id = "3",
                     Name = "测试插件3",
@@ -62,40 +66,23 @@ namespace BackManager.Server.Controllers
                 }
             };
 
-            return Ok(ApiResponse<List<Plugin>>.Ok(plugins, "获取插件列表成功"));
-        }
-
-        /// <summary>
-        /// 切换插件状态
-        /// </summary>
-        /// <param name="pluginId">插件ID</param>
-        /// <returns>操作结果</returns>
-        [HttpPost("{pluginId}/toggle")]
-        public IActionResult TogglePlugin(string pluginId)
-        {
-            // 模拟切换插件状态
-            return Ok(ApiResponse<object>.Ok(null, $"插件 {pluginId} 状态已更新"));
-        }
-
-        /// <summary>
-        /// 上传插件
-        /// </summary>
-        /// <returns>操作结果</returns>
-        [HttpPost("upload")]
-        public IActionResult UploadPlugin()
-        {
-            // 模拟上传插件
-            var plugin = new Plugin
+            foreach (var plugin in plugins)
             {
-                Id = "4",
-                Name = "新上传的插件",
-                Description = "这是一个新上传的插件",
-                IsEnabled = false,
-                Status = "Disabled",
-                Version = "1.0.0"
-            };
+                var pluginDict = (System.Collections.Generic.IDictionary<string, object>)plugin;
+                var pluginId = pluginDict["Id"].ToString()!;
+                var pluginState = pluginStates.FirstOrDefault(p => p.PluginId == pluginId);
+                if (pluginState != null)
+                {
+                    pluginDict["IsEnabled"] = true;
+                }
+            }
 
-            return Ok(ApiResponse<Plugin>.Ok(plugin, "插件上传成功"));
+            return Ok(ApiResponse<object>.Ok(plugins, "获取插件列表成功"));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("Failed to get plugin list: {Error}", ex.Message);
+            return StatusCode(500, ApiResponse<object>.Error($"获取插件列表失败: {ex.Message}"));
         }
     }
 }

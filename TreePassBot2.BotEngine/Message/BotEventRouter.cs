@@ -1,5 +1,6 @@
 using Makabaka.Events;
 using Makabaka.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -7,6 +8,7 @@ using TreePassBot2.BotEngine.Message.Routers.Event;
 using TreePassBot2.BotEngine.Services;
 using TreePassBot2.Core.Entities.Enums;
 using TreePassBot2.Core.Options;
+using TreePassBot2.Data;
 using TreePassBot2.Infrastructure.MakabakaAdaptor;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Converters;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
@@ -57,11 +59,25 @@ public class BotEventRouter
 
         await using var scope = _serviceProvider.CreateAsyncScope();
         var archiver = scope.ServiceProvider.GetRequiredService<MessageArchiveService>();
+        var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
+
+        var latestMessageId = await db.ArchivedMessageLogs
+                                      .Where(x => x.GroupId == e.GroupId && x.UserId == e.UserId)
+                                      .OrderByDescending(x => x.Id)
+                                      .Select(x => x.MessageId)
+                                      .FirstOrDefaultAsync()
+                                      .ConfigureAwait(false);
+
+        if (latestMessageId == 0)
+        {
+            _logger.LogError("Fialed to get latest message log id");
+            return;
+        }
 
         await archiver.ArchiveUserMessageAsync(
             e.GroupId,
             e.OperatorId,
-            e.UserId,
+            latestMessageId,
             $"Muted for {e.Duration}s", TimeSpan.FromHours(2)).ConfigureAwait(false);
     }
 
@@ -81,13 +97,27 @@ public class BotEventRouter
 
         await using var scope = _serviceProvider.CreateAsyncScope();
         var archiver = scope.ServiceProvider.GetRequiredService<MessageArchiveService>();
+        var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
+
+        var latestMessageId = await db.ArchivedMessageLogs
+                                      .Where(x => x.GroupId == e.GroupId && x.UserId == e.UserId)
+                                      .OrderByDescending(x => x.Id)
+                                      .Select(x => x.MessageId)
+                                      .FirstOrDefaultAsync()
+                                      .ConfigureAwait(false);
+
+        if (latestMessageId == 0)
+        {
+            _logger.LogError("Fialed to get latest message log id");
+            return;
+        }
 
         var reason = e.SubType == GroupMemberDecreaseEventType.Kick ? "Kicked" : "Left";
 
         await archiver.ArchiveUserMessageAsync(
             e.GroupId,
             e.OperatorId,
-            e.UserId,
+            latestMessageId,
             reason, TimeSpan.FromHours(2)).ConfigureAwait(false);
     }
 

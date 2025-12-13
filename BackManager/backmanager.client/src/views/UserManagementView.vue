@@ -189,7 +189,10 @@
   </div>
 </template>
 
-<script setup lang="ts">import { ref, computed, onMounted } from 'vue';
+<script setup lang="ts">defineOptions({
+  name: 'UserManagementView'
+});
+import { ref, computed, onMounted } from 'vue';
 import {
   getGroups,
   getGroupMembers,

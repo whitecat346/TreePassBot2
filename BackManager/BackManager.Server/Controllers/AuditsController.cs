@@ -1,114 +1,130 @@
 using BackManager.Server.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Immutable;
+using TreePassBot2.Core.Entities.Enums;
+using TreePassBot2.Data;
 
 // ReSharper disable ComplexConditionExpression
 
-namespace BackManager.Server.Controllers
+namespace BackManager.Server.Controllers;
+
+/// <summary>
+/// 审核记录控制器
+/// </summary>
+/// <remarks>
+/// 审核记录控制器构造函数
+/// </remarks>
+/// <param name="dbContext">数据库上下文</param>
+[ApiController]
+[Route("api/[controller]")]
+public class AuditsController(
+    BotDbContext dbContext,
+    ILogger<AuditsController> logger) : ControllerBase
 {
     /// <summary>
-    /// 审核记录控制器
+    /// 获取审核记录列表
     /// </summary>
-    [ApiController]
-    [Route("api/[controller]")]
-    public class AuditsController : ControllerBase
+    /// <returns>审核记录列表</returns>
+    [HttpGet]
+    public async Task<IActionResult> GetAuditRecords()
     {
-        /// <summary>
-        /// 审核记录模型
-        /// </summary>
-        private record AuditRecord
+        try
         {
-            public required string Id { get; set; }
-            public required string UserId { get; set; }
-            public required string Username { get; set; }
-            public required string GroupId { get; set; }
-            public required string GroupName { get; set; }
-            public required string Status { get; set; }
-            public string? VerificationCode { get; set; }
-            public bool EnteredGroup { get; set; }
-            public required string CreatedAt { get; set; }
-            public string? ProcessedAt { get; set; }
-            public string? ProcessedBy { get; set; }
-        }
+            var auditRequests =
+                await dbContext.AuditRequests
+                               .OrderByDescending(a => a.CreatedAt)
+                               .ToListAsync().ConfigureAwait(false);
 
-        /// <summary>
-        /// 获取审核记录列表
-        /// </summary>
-        /// <returns>审核记录列表</returns>
-        [HttpGet]
-        public IActionResult GetAuditRecords()
-        {
-            // 模拟审核记录数据
-            var audits = new List<AuditRecord>
+            var auditRecords = auditRequests.Select(audit => new
             {
-                new()
-                {
-                    Id = "1",
-                    UserId = "user1",
-                    Username = "用户1",
-                    GroupId = "group1",
-                    GroupName = "测试群组1",
-                    Status = "Pending",
-                    VerificationCode = null,
-                    EnteredGroup = false,
-                    CreatedAt = DateTime.UtcNow.AddHours(-2).ToString("o"),
-                    ProcessedAt = null,
-                    ProcessedBy = null
-                },
-                new()
-                {
-                    Id = "2",
-                    UserId = "user2",
-                    Username = "用户2",
-                    GroupId = "group2",
-                    GroupName = "测试群组2",
-                    Status = "Approved",
-                    VerificationCode = "123456",
-                    EnteredGroup = true,
-                    CreatedAt = DateTime.UtcNow.AddHours(-4).ToString("o"),
-                    ProcessedAt = DateTime.UtcNow.AddHours(-3).ToString("o"),
-                    ProcessedBy = "admin1"
-                },
-                new()
-                {
-                    Id = "3",
-                    UserId = "user3",
-                    Username = "用户3",
-                    GroupId = "group1",
-                    GroupName = "测试群组1",
-                    Status = "Rejected",
-                    VerificationCode = null,
-                    EnteredGroup = false,
-                    CreatedAt = DateTime.UtcNow.AddHours(-6).ToString("o"),
-                    ProcessedAt = DateTime.UtcNow.AddHours(-5).ToString("o"),
-                    ProcessedBy = "admin2"
-                }
-            };
+                Id = audit.Id.ToString(),
+                UserId = audit.RequestQqId.ToString(),
+                GroupId = audit.TargetGroupId.ToString(),
+                Status = audit.Status.ToString(),
+                VerificationCode = audit.Passcode,
+                EnteredGroup = audit.Status == AuditStatus.Approved,
+                CreatedAt = audit.CreatedAt.ToString("O"),
+                ProcessedAt = audit.ProcessedAt.ToString("O"),
+                audit.ProcessedBy
+            }).ToImmutableList();
 
-            return Ok(ApiResponse<List<AuditRecord>>.Ok(audits, "获取审核记录成功"));
+            return Ok(ApiResponse<object>.Ok(auditRecords, "获取审核记录成功"));
         }
-
-        /// <summary>
-        /// 批准审核
-        /// </summary>
-        /// <param name="auditId">审核ID</param>
-        /// <returns>操作结果</returns>
-        [HttpPost("{auditId}/approve")]
-        public IActionResult ApproveAudit(string auditId)
+        catch (Exception ex)
         {
-            // 模拟批准审核操作
+            logger.LogError("Failed to get audit records: {Error}", ex.Message);
+            return StatusCode(500, ApiResponse<object>.Error($"获取审核记录失败: {ex.Message}"));
+        }
+    }
+
+    /// <summary>
+    /// 批准审核
+    /// </summary>
+    /// <param name="auditId">审核ID</param>
+    /// <returns>操作结果</returns>
+    [HttpPost("{auditId}/approve")]
+    public async Task<IActionResult> ApproveAudit(string auditId)
+    {
+        try
+        {
+            if (!Guid.TryParse(auditId, out var id))
+            {
+                return BadRequest(ApiResponse<object>.Error("无效的审核ID"));
+            }
+
+            var auditRequest = await dbContext.AuditRequests.FindAsync(id).ConfigureAwait(false);
+            if (auditRequest == null)
+            {
+                return NotFound(ApiResponse<object>.Error("审核记录不存在"));
+            }
+
+            auditRequest.Status = AuditStatus.Approved;
+            auditRequest.ProcessedBy = 0;
+            auditRequest.ProcessedAt = DateTimeOffset.UtcNow;
+            await dbContext.SaveChangesAsync().ConfigureAwait(false);
+
             return Ok(ApiResponse<object>.Ok(null, $"审核 {auditId} 已批准"));
         }
-
-        /// <summary>
-        /// 拒绝审核
-        /// </summary>
-        /// <param name="auditId">审核ID</param>
-        /// <returns>操作结果</returns>
-        [HttpPost("{auditId}/reject")]
-        public IActionResult RejectAudit(string auditId)
+        catch (Exception ex)
         {
-            // 模拟拒绝审核操作
+            logger.LogError("Failed to approve audit: {Error}", ex.Message);
+            return StatusCode(500, ApiResponse<object>.Error($"批准审核失败: {ex.Message}"));
+        }
+    }
+
+    /// <summary>
+    /// 拒绝审核
+    /// </summary>
+    /// <param name="auditId">审核ID</param>
+    /// <returns>操作结果</returns>
+    [HttpPost("{auditId}/reject")]
+    public async Task<IActionResult> RejectAudit(string auditId)
+    {
+        try
+        {
+            if (!Guid.TryParse(auditId, out var id))
+            {
+                return BadRequest(ApiResponse<object>.Error("无效的审核ID"));
+            }
+
+            var auditRequest = await dbContext.AuditRequests.FindAsync(id).ConfigureAwait(false);
+            if (auditRequest == null)
+            {
+                return NotFound(ApiResponse<object>.Error("审核记录不存在"));
+            }
+
+            auditRequest.Status = AuditStatus.Rejected;
+            auditRequest.ProcessedBy = 0;
+            auditRequest.ProcessedAt = DateTimeOffset.UtcNow;
+            await dbContext.SaveChangesAsync().ConfigureAwait(false);
+
             return Ok(ApiResponse<object>.Ok(null, $"审核 {auditId} 已拒绝"));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("Failed to reject audit: {Error}", ex.Message);
+            return StatusCode(500, ApiResponse<object>.Error($"拒绝审核失败: {ex.Message}"));
         }
     }
 }

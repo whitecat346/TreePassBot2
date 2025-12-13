@@ -84,7 +84,10 @@
   </el-dialog>
 </template>
 
-<script setup lang="ts">import { ref, onMounted } from 'vue';
+<script setup lang="ts">defineOptions({
+  name: 'PluginManagementView'
+});
+import { ref, onMounted } from 'vue';
 import { getPlugins, togglePlugin, type Plugin } from '@/services/api'
 import { ElMessage, type UploadProps } from 'element-plus';
 

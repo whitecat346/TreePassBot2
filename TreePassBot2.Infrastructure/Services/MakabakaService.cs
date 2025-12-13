@@ -1,7 +1,6 @@
 using Makabaka;
 using Makabaka.Exceptions;
 using Makabaka.Models;
-using TreePassBot2.Core.Entities;
 using TreePassBot2.Core.Entities.Enums;
 using TreePassBot2.Infrastructure.Exceptions;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Converters;
@@ -43,18 +42,13 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
     /// <exception cref="TimeoutException">Throws if timed out when execute api.</exception>
     public async Task SendGroupMessageAsync(ulong groupId, Message message)
     {
-        if (message == null)
-            throw new ArgumentNullException(nameof(message));
+        ArgumentNullException.ThrowIfNull(message);
 
         try
         {
-            // 转换消息
             var makabakaMessage = MessageConverter.ConvertToMakabakaMessage(message);
 
-            // 发送消息
             var response = await BotContext.SendGroupMessageAsync(groupId, makabakaMessage).ConfigureAwait(false);
-
-            // 确保请求成功
             response.EnsureSuccess();
         }
         catch (APIException ex)
@@ -83,18 +77,13 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
     /// <exception cref="TimeoutException">Throws if timed out when execute api.</exception>
     public async Task SendPrivateMessageAsync(ulong userId, Message message)
     {
-        if (message == null)
-            throw new ArgumentNullException(nameof(message));
+        ArgumentNullException.ThrowIfNull(message);
 
         try
         {
-            // 转换消息
             var makabakaMessage = MessageConverter.ConvertToMakabakaMessage(message);
 
-            // 发送消息
             var response = await BotContext.SendPrivateMessageAsync(userId, makabakaMessage).ConfigureAwait(false);
-
-            // 确保请求成功
             response.EnsureSuccess();
         }
         catch (APIException ex)
@@ -123,8 +112,7 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
     /// <exception cref="TimeoutException">Throws if timed out when execute api.</exception>
     public Task SendGroupMessageAsync(ulong groupId, MessageBuilder messageBuilder)
     {
-        if (messageBuilder == null)
-            throw new ArgumentNullException(nameof(messageBuilder));
+        ArgumentNullException.ThrowIfNull(messageBuilder);
 
         var message = messageBuilder.Build();
         return SendGroupMessageAsync(groupId, message);
@@ -142,8 +130,7 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
     /// <exception cref="TimeoutException">Throws if timed out when execute api.</exception>
     public Task SendPrivateMessageAsync(ulong userId, MessageBuilder messageBuilder)
     {
-        if (messageBuilder == null)
-            throw new ArgumentNullException(nameof(messageBuilder));
+        ArgumentNullException.ThrowIfNull(messageBuilder);
 
         var message = messageBuilder.Build();
         return SendPrivateMessageAsync(userId, message);
@@ -158,7 +145,7 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
     /// <exception cref="FailedToExcuteApiException">Throws if failed to execute api.</exception>
     /// <exception cref="ArgumentNullException"><paramref name="forwardId"/> is <see langword="null"/></exception>
     /// <exception cref="TimeoutException">Throws if timed out when execute api.</exception>
-    public async Task<List<Message>> GetForwardMessageAsync(string forwardId)
+    public async Task<List<Message>?> GetForwardMessageAsync(string forwardId)
     {
         if (string.IsNullOrEmpty(forwardId))
             throw new ArgumentNullException(nameof(forwardId));
@@ -193,16 +180,38 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
     }
 
     /// <inheritdoc />
-    public async Task<QqUserInfo> GetGroupMemberInfoAsync(ulong groupId, ulong userId)
+    public async Task<MemberInfo?> GetGroupMemberInfoAsync(ulong groupId, ulong userId)
     {
         var apiRep = await _makabakaApp.BotContext.GetGroupMemberInfoAsync(groupId, userId).ConfigureAwait(false);
+        var data = apiRep.Data;
+
+        if (data is null)
+        {
+            return null;
+        }
+
+        var mamberInfo = ConvertToQqUserInfo(data);
+
+        return mamberInfo;
     }
 
     /// <inheritdoc />
-    public Task<IEnumerable<QqUserInfo>> GetGroupMemberListAsync(ulong groupId)
+    public async Task<IEnumerable<MemberInfo>?> GetGroupMemberListAsync(ulong groupId)
     {
-        throw new NotImplementedException();
+        var apiRep = await _makabakaApp.BotContext.GetGroupMemberListAsync(groupId).ConfigureAwait(false);
+        var data = apiRep.Data;
+
+        var memberInfoList = data?.Select(ConvertToQqUserInfo);
+        return memberInfoList;
     }
+
+    /// <inheritdoc />
+    public Task KickMemberAsync(ulong groupId, ulong userId, bool rejectRequest = false) =>
+        _makabakaApp.BotContext.KickGroupMemberAsync(groupId, userId, rejectRequest);
+
+    /// <inheritdoc />
+    public Task WithdrawMessageAsync(long messageId) =>
+        _makabakaApp.BotContext.RevokeMessageAsync(messageId);
 
     /// <inheritdoc />
     public Task ConnectAsync()

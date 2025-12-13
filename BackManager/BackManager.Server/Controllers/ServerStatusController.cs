@@ -1,36 +1,25 @@
 using BackManager.Server.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BackManager.Server.Controllers
+namespace BackManager.Server.Controllers;
+
+/// <summary>
+/// 服务器状态控制器
+/// </summary>
+[ApiController]
+[Route("api/server")]
+public class ServerStatusController(ILogger<ServerStatusController> logger) : ControllerBase
 {
     /// <summary>
-    /// 服务器状态控制器
+    /// 获取服务器状态
     /// </summary>
-    [ApiController]
-    [Route("api/server")]
-    public class ServerStatusController : ControllerBase
+    /// <returns>服务器状态</returns>
+    [HttpGet("status")]
+    public IActionResult GetServerStatus()
     {
-        /// <summary>
-        /// 服务器状态模型
-        /// </summary>
-        private record ServerStatus
+        try
         {
-            public double CpuUsage { get; set; }
-            public double MemoryUsage { get; set; }
-            public double DiskUsage { get; set; }
-            public string Uptime { get; set; } = "0 days 00:00:00";
-            public required string Timestamp { get; set; }
-        }
-
-        /// <summary>
-        /// 获取服务器状态
-        /// </summary>
-        /// <returns>服务器状态</returns>
-        [HttpGet("status")]
-        public IActionResult GetServerStatus()
-        {
-            // 模拟服务器状态数据
-            var serverStatus = new ServerStatus
+            var serverStatus = new
             {
                 CpuUsage = 45.2,
                 MemoryUsage = 67.8,
@@ -39,7 +28,12 @@ namespace BackManager.Server.Controllers
                 Timestamp = DateTime.UtcNow.ToString("o")
             };
 
-            return Ok(ApiResponse<ServerStatus>.Ok(serverStatus, "获取服务器状态成功"));
+            return Ok(ApiResponse<object>.Ok(serverStatus, "获取服务器状态成功"));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("Failed to  get server status: {Error}", ex.Message);
+            return StatusCode(500, ApiResponse<object>.Error($"获取服务器状态失败: {ex.Message}"));
         }
     }
 }
