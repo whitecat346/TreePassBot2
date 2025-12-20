@@ -28,7 +28,7 @@ public class AppRuntimeInfo
         var cpuUsageTotal =
             cpuUsedMs / (Environment.ProcessorCount * totalMsPassed) * 100;
 
-        return Math.Clamp(cpuUsageTotal, 0, 100);
+        return Math.Round(Math.Clamp(cpuUsageTotal, 0, 100), 2);
     }
 
     public double GetMemoryUsage()
@@ -44,13 +44,13 @@ public class AppRuntimeInfo
             ? 0
             : usedMemory / totalMemory * 100;
 
-        return usagePercent;
+        return Math.Round(usagePercent, 2);
     }
 
     public double GetDiskUsage()
     {
         var disks = GetDisks();
-        return disks.Average(disk => disk.UsagePercent);
+        return Math.Round(disks.Average(disk => disk.UsagePercent), 2);
     }
 
     private static List<DiskStatusDto> GetDisks()

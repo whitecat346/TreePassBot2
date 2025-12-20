@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using TreePassBot2.BotEngine.Interfaces;
 using TreePassBot2.Core.Entities;
 using TreePassBot2.Data;
@@ -6,9 +7,10 @@ using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 
 namespace TreePassBot2.BotEngine.Message.Routers.Message;
 
-public class MessageTracer(
+public partial class MessageTracer(
     BotDbContext db,
-    ICommunicationService communication) : IMessageHandler
+    ICommunicationService communication,
+    ILogger<MessageTracer> logger) : IMessageHandler
 {
     /// <inheritdoc />
     public async Task HandleMessageAsync(MessageEventData data)
@@ -39,7 +41,12 @@ public class MessageTracer(
             RecalledAt = null
         };
 
+        LogLogMessageMsgid(logger, data.MessageId);
+
         db.MessageLogs.Add(msgLog);
         await db.SaveChangesAsync().ConfigureAwait(false);
     }
+
+    [LoggerMessage(LogLevel.Trace, "Log message: {MsgId}")]
+    static partial void LogLogMessageMsgid(ILogger<MessageTracer> logger, long MsgId);
 }

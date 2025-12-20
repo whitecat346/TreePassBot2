@@ -14,9 +14,9 @@
                      size="small"
                      class="w-64">
             <el-option v-for="group in groups"
-                       :key="group.id"
+                       :key="group.groupId"
                        :label="group.name"
-                       :value="group.id" />
+                       :value="group.groupId" />
           </el-select>
         </div>
 
@@ -194,6 +194,8 @@
 import { ref, computed, onMounted, watch, nextTick, onBeforeUnmount } from 'vue';
 import {
   getMessageLogs,
+  getGroups,
+  type Group,
   type MessageLog
 } from '@/services/api';
 import { ElMessage, ElIcon } from 'element-plus';
@@ -221,11 +223,7 @@ const filterKeyword = ref('');
 const displayMode = ref<'all' | 'recalled' | 'normal'>('all');
 
 // 模拟群组数据（实际应从API获取）
-const groups = ref([
-  { id: '1', name: '群组1' },
-  { id: '2', name: '群组2' },
-  { id: '3', name: '群组3' }
-]);
+const groups = ref<Group[]>([]);
 
 // 过滤后的消息
 const filteredMessages = computed(() => {
@@ -311,6 +309,14 @@ const checkIsAtBottom = () => {
 // 获取消息日志
 const fetchMessageLogs = async (isLoadMore = false) => {
   try {
+    // 加载群组列表
+    const groupResponse = await getGroups();
+    if (groupResponse.data.success) {
+      groups.value = groupResponse.data.data;
+    } else {
+      ElMessage.error('获取群组列表失败');
+    }
+
     if (isLoadMore) {
       if (!hasMore.value || loadingMore.value) return;
       loadingMore.value = true;

@@ -1,5 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
+using TreePassBot2.BotEngine.Interfaces;
 using TreePassBot2.BotEngine.Message;
+using TreePassBot2.BotEngine.Message.Routers.Event;
 using TreePassBot2.BotEngine.Plugins;
 using TreePassBot2.BotEngine.Services;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
@@ -9,17 +12,38 @@ namespace TreePassBot2.BotEngine.Extensions;
 
 public static class DiExtensions
 {
-    public static IServiceCollection AddBotEngineServices(this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        services.AddSingleton<PluginManagerService>()
-                .AddSingleton<CommandContextImplFactory>()
-                .AddSingleton<MessageRouter>()
-                .AddSingleton<MessageArchiveService>()
-                .AddSingleton<BotEventRouter>()
-                .AddSingleton<AppRuntimeInfo>()
-                .AddSingleton<UserManageService>()
-                .AddSingleton<ICommunicationService, MakabakaService>();
+        public IServiceCollection AddBotEngineServices()
+        {
+            services.AddSingleton<PluginManagerService>()
+                    .AddSingleton<CommandContextImplFactory>()
+                    .AddSingleton<MessageRouter>()
+                    .AddSingleton<MessageArchiveService>()
+                    .AddSingleton<BotEventRouter>()
+                    .AddSingleton<AppRuntimeInfo>()
+                    .AddSingleton<UserManageService>()
+                    .AddSingleton<ICommunicationService, MakabakaService>()
+                    .AddScoped<WithdrawMessageFlagger>()
+                    .AddBotEngineMessageHandlers();
 
-        return services;
+            return services;
+        }
+
+        private IServiceCollection AddBotEngineMessageHandlers()
+        {
+            var handlerTypes = Assembly.GetExecutingAssembly().GetTypes()
+                                       .Where(t => typeof(IMessageHandler).IsAssignableFrom(t) &&
+                                                   t is { IsInterface: false, IsAbstract: false });
+
+            foreach (var type in handlerTypes)
+            {
+                Console.WriteLine($"Add message handler: {type.Name}");
+
+                services.AddScoped(typeof(IMessageHandler), type);
+            }
+
+            return services;
+        }
     }
 }

@@ -198,6 +198,9 @@ export interface MessageLogResponse {
 export const getBotStatus = () => apiClient.get<ApiResponse<BotStatus>>('/bot/status');
 export const startBot = () => apiClient.post<ApiResponse<void>>('/bot/start');
 export const stopBot = () => apiClient.post<ApiResponse<void>>('/bot/stop');
+export const totalMemberCount = () => apiClient.get<ApiResponse<{ count: number }>>('/groups/totalMemberCount');
+export const totalGroupCount = () => apiClient.get<ApiResponse<{ count: number }>>('/groups/totalGroupCount');
+export const enabledPluginCount = () => apiClient.get<ApiResponse<{ count: number }>>('/plugins/enabledCount');
 
 // 服务器状态 API
 export const getServerStatus = () => apiClient.get<ApiResponse<ServerStatus>>('/server/status');
@@ -213,7 +216,11 @@ export const uploadPlugin = (formData: FormData) => apiClient.post<ApiResponse<P
 
 // 用户管理 API
 export const getGroups = () => apiClient.get<ApiResponse<Group[]>>('/groups');
-export const getGroupMembers = (groupId: string) => apiClient.get<ApiResponse<GroupMember[]>>(`/groups/${groupId}/members`);
+export const getGroupMemberCount = (groupId: string) => apiClient.get<ApiResponse<{ count: number }>>(`/groups/${groupId}/count`);
+export const getGroupMembers = (groupId: string, params?: {
+  limit: number;
+  skip: number;
+}) => apiClient.get<ApiResponse<GroupMember[]>>(`/groups/${groupId}/members`, { params });
 
 // 审核记录 API
 export const getAuditRecords = () => apiClient.get<ApiResponse<AuditRecord[]>>('/audits');

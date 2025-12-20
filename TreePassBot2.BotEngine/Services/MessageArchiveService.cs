@@ -54,7 +54,7 @@ public partial class MessageArchiveService(
     }
 
     [LoggerMessage(LogLevel.Information,
-                   "Archived {Count} messages before {MessageId} in group {Group}.\t\n Reason: {Reason}")]
+                   "Archived {count} messages before {messageId} in group {group}.\t\n Reason: {reason}")]
     static partial void LogArchivedCountMessagesBeforeMessageidInGroupGroupReasonReason(
-        ILogger<MessageArchiveService> logger, int Count, long MessageId, ulong Group, string Reason);
+        ILogger<MessageArchiveService> logger, int count, long messageId, ulong group, string reason);
 }

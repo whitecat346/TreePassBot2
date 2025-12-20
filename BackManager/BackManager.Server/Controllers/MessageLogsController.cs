@@ -40,24 +40,36 @@ public partial class MessageLogsController(
         {
             var query = dbContext.MessageLogs.AsQueryable();
 
-            if (!string.IsNullOrEmpty(groupId) && ulong.TryParse(groupId, out var groupIdValue))
+            if (!string.IsNullOrEmpty(groupId))
             {
-                query = query.Where(m => m.GroupId == groupIdValue);
+                if (ulong.TryParse(groupId, out var groupIdValue))
+                {
+                    query = query.Where(m => m.GroupId == groupIdValue);
+                }
             }
 
-            if (!string.IsNullOrEmpty(startTime) && DateTimeOffset.TryParse(startTime, out var startTimeValue))
+            if (!string.IsNullOrEmpty(startTime))
             {
-                query = query.Where(m => m.SendAt >= startTimeValue);
+                if (DateTimeOffset.TryParse(startTime, out var startTimeValue))
+                {
+                    query = query.Where(m => m.SendAt >= startTimeValue);
+                }
             }
 
-            if (!string.IsNullOrEmpty(endTime) && DateTimeOffset.TryParse(endTime, out var endTimeValue))
+            if (!string.IsNullOrEmpty(endTime))
             {
-                query = query.Where(m => m.SendAt <= endTimeValue);
+                if (DateTimeOffset.TryParse(endTime, out var endTimeValue))
+                {
+                    query = query.Where(m => m.SendAt <= endTimeValue);
+                }
             }
 
-            if (!string.IsNullOrEmpty(beforeId) && long.TryParse(beforeId, out var beforeIdValue))
+            if (!string.IsNullOrEmpty(beforeId))
             {
-                query = query.Where(m => m.Id < beforeIdValue);
+                if (long.TryParse(beforeId, out var beforeIdValue))
+                {
+                    query = query.Where(m => m.Id < beforeIdValue);
+                }
             }
 
             var messageLogs = await query

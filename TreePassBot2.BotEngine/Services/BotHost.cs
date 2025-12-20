@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using System.Reflection;
+using TreePassBot2.BotEngine.Message;
 using TreePassBot2.Core.Options;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 
@@ -8,6 +9,7 @@ namespace TreePassBot2.BotEngine.Services;
 
 public class BotHost(
     ICommunicationService communicationService,
+    BotEventRouter router,
     AppRuntimeInfo runtimeInfo,
     PluginManagerService pluginManager,
     IOptions<BotOptions> config) : IHostedService
@@ -19,7 +21,8 @@ public class BotHost(
     {
         var pluginDir = _config.PluginDir;
         await LoadPluginsAsync(pluginDir).ConfigureAwait(false);
-        //await communicationService.ConnectAsync().ConfigureAwait(false);
+        await communicationService.ConnectAsync().ConfigureAwait(false);
+        router.StartRoute();
 
         runtimeInfo.StartTime = DateTimeOffset.UtcNow;
         runtimeInfo.CurrentVersion = Assembly.GetExecutingAssembly()
@@ -46,6 +49,6 @@ public class BotHost(
     public async Task StopAsync(CancellationToken cancellationToken)
     {
         await pluginManager.DisposeAsync().ConfigureAwait(false);
-        //await communicationService.DisconnectAsync().ConfigureAwait(false);
+        await communicationService.DisconnectAsync().ConfigureAwait(false);
     }
 }

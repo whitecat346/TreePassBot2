@@ -15,7 +15,7 @@ namespace BackManager.Server.Controllers;
 /// <param name="userManage">用户管理服务</param>
 [ApiController]
 [Route("api/[controller]")]
-public class GroupsController(
+public partial class GroupsController(
     UserManageService userManage,
     ILogger<GroupsController> logger) : ControllerBase
 {
@@ -34,8 +34,30 @@ public class GroupsController(
         }
         catch (Exception ex)
         {
-            logger.LogError("Failed to get group list: {Error}", ex.Message);
+            LogFailedToGetGroupListError(logger, ex.Message);
             return StatusCode(500, ApiResponse<object>.Error($"获取群组列表失败: {ex.Message}"));
         }
     }
+
+    [HttpGet("totalGroupCount")]
+    public async Task<IActionResult> GetTotalGroupCount()
+    {
+        try
+        {
+            var groups = await userManage.GetGroupListFromApiAsync().ConfigureAwait(false);
+            var totalCount = groups.Count;
+            return Ok(ApiResponse<object>.Ok(totalCount, "获取群组总数成功"));
+        }
+        catch (Exception ex)
+        {
+            LogFailedToGetTotalGroupCountError(logger, ex.Message);
+            return StatusCode(500, ApiResponse<object>.Error($"获取群组总数失败: {ex.Message}"));
+        }
+    }
+
+    [LoggerMessage(LogLevel.Error, "Failed to get group list: {Error}")]
+    static partial void LogFailedToGetGroupListError(ILogger<GroupsController> logger, string Error);
+
+    [LoggerMessage(LogLevel.Error, "Failed to get total group count: {Error}")]
+    static partial void LogFailedToGetTotalGroupCountError(ILogger<GroupsController> logger, string Error);
 }

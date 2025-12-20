@@ -15,7 +15,7 @@ using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 
 namespace TreePassBot2.BotEngine.Message;
 
-public class BotEventRouter
+public partial class BotEventRouter
 {
     private readonly ILogger<BotEventRouter> _logger;
     private readonly MessageRouter _router;
@@ -30,8 +30,12 @@ public class BotEventRouter
 
         _logger = _serviceProvider.GetRequiredService<ILogger<BotEventRouter>>();
         _router = _serviceProvider.GetRequiredService<MessageRouter>();
-        var makabaka = _serviceProvider.GetRequiredService<ICommunicationService>();
         _config = config.Value;
+    }
+
+    public void StartRoute()
+    {
+        var makabaka = _serviceProvider.GetRequiredService<ICommunicationService>();
 
         makabaka.BotContext.OnGroupMessage += BotContextOnOnGroupMessageAsync;
 
@@ -47,7 +51,10 @@ public class BotEventRouter
 
     private Task BotContextOnOnGroupMessageWithdrawAsync(object _, GroupMessageWithdrawEventArgs e)
     {
-        return WithdrawMessageFlagger.FlagMessageAsync(e.MessageId, e.OperatorId, _serviceProvider);
+        using var scope = _serviceProvider.CreateAsyncScope();
+        var flagger = scope.ServiceProvider.GetRequiredService<WithdrawMessageFlagger>();
+
+        return flagger.FlagMessageAsync(e.MessageId, e.OperatorId);
     }
 
     private async Task BotContextOnOnGroupMemberMuteAsync(object _, GroupMemberMuteEventArgs e)
@@ -70,7 +77,7 @@ public class BotEventRouter
 
         if (latestMessageId == 0)
         {
-            _logger.LogError("Fialed to get latest message log id");
+            LogFialedToGetLatestMessageLogId();
             return;
         }
 
@@ -108,7 +115,7 @@ public class BotEventRouter
 
         if (latestMessageId == 0)
         {
-            _logger.LogError("Fialed to get latest message log id");
+            LogFialedToGetLatestMessageLogId();
             return;
         }
 
@@ -142,6 +149,8 @@ public class BotEventRouter
 
         var msgData = new MessageEventData(senderData, msg, e.MessageId, e.GroupId);
 
+        LogHandleMessageMsgid(msgData.MessageId);
+
         return _router.ExecuteMessageHandlerAsync(msgData);
     }
 
@@ -159,4 +168,10 @@ public class BotEventRouter
             _ => UserRole.Member,
         };
     }
+
+    [LoggerMessage(LogLevel.Error, "Fialed to get latest message log id")]
+    partial void LogFialedToGetLatestMessageLogId();
+
+    [LoggerMessage(LogLevel.Information, "Handle message: {msgId}")]
+    partial void LogHandleMessageMsgid(long msgId);
 }

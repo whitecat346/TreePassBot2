@@ -182,6 +182,7 @@ import { ref, computed, onMounted } from 'vue';
 import {
   getGroups,
   getGroupMembers,
+  getGroupMemberCount,
   type Group,
   type GroupMember
 } from '@/services/api';
@@ -206,6 +207,9 @@ const memberSearchKeyword = ref('');
 const memberCurrentPage = ref(1);
 const memberPageSize = ref(20);
 const memberTotal = ref(0);
+
+// 成员分页配置
+const lastSeletedGroupId = ref('');
 
 // 弹窗控制
 const memberDetailVisible = ref(false);
@@ -295,17 +299,35 @@ const fetchGroups = async () => {
   }
 };
 
+const fetchMemberCount = async (groupId: string) => {
+  try {
+    const response = await getGroupMemberCount(groupId);
+    if (response.data.success) {
+      memberTotal.value = response.data.data.count;
+    }
+  } catch (error) {
+    ElMessage.error('获取成员数量失败');
+    console.error('获取成员数量失败:', error);
+  }
+}
+
 // 获取群组成员列表
 const fetchGroupMembers = async (groupId: string) => {
   try {
     memberLoading.value = true;
-    memberCurrentPage.value = 1;
 
-    // 实际调用时需要传递分页参数
-    const response = await getGroupMembers(groupId);
+    if (lastSeletedGroupId.value !== groupId) {
+      lastSeletedGroupId.value = groupId;
+      fetchMemberCount(groupId);
+    }
+
+    const response = await getGroupMembers(groupId, {
+      limit: memberPageSize.value,
+      skip: (memberCurrentPage.value - 1) * memberPageSize.value
+    });
+
     if (response.data.success) {
       members.value = response.data.data;
-      memberTotal.value = response.data.data.length; // 实际项目中应该从API返回的total字段获取
     }
   } catch (error) {
     ElMessage.error('获取成员列表失败');

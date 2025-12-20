@@ -1,16 +1,13 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using TreePassBot2.Data;
 
 namespace TreePassBot2.BotEngine.Message.Routers.Event;
 
-public static class WithdrawMessageFlagger
+public partial class WithdrawMessageFlagger(BotDbContext dbContext, ILogger<WithdrawMessageFlagger> logger)
 {
-    public static async Task FlagMessageAsync(long msgId, ulong operatorId, IServiceProvider provider)
+    public async Task FlagMessageAsync(long msgId, ulong operatorId)
     {
-        await using var scope = provider.CreateAsyncScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<BotDbContext>();
-
         var message = await dbContext.MessageLogs
                                      .FirstOrDefaultAsync(log => log.MessageId == msgId)
                                      .ConfigureAwait(false);
@@ -20,9 +17,14 @@ public static class WithdrawMessageFlagger
             return;
         }
 
+        LogFlageMessageMsgid(logger, msgId);
+
         message.IsRecalled = true;
         message.RecalledBy = operatorId;
 
         await dbContext.SaveChangesAsync().ConfigureAwait(false);
     }
+
+    [LoggerMessage(LogLevel.Trace, "Flage message: {msgId}")]
+    static partial void LogFlageMessageMsgid(ILogger<WithdrawMessageFlagger> logger, long msgId);
 }

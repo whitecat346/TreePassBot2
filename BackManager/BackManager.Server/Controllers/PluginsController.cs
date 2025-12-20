@@ -55,6 +55,22 @@ public partial class PluginsController(
         }
     }
 
+    [HttpGet("enabledCount")]
+    public Task<IActionResult> GetEnabledPluginCount()
+    {
+        try
+        {
+            var count = pluginManager.ActivePlugins.Count(p => p.IsAlive);
+            return Task.FromResult<IActionResult>(Ok(ApiResponse<object>.Ok(count, "获取启用的插件数量成功")));
+        }
+        catch (Exception ex)
+        {
+            LogFailedToGetEnabledPluginCountExmessage(logger, ex.Message);
+            return Task.FromResult<IActionResult>(
+                StatusCode(500, ApiResponse<object>.Error($"获取启用的插件数量失败: {ex.Message}")));
+        }
+    }
+
     /// <summary>
     /// 上传新插件
     /// </summary>
@@ -141,4 +157,7 @@ public partial class PluginsController(
                                                          string msg);
 
     #endregion
+
+    [LoggerMessage(LogLevel.Error, "Failed to get enabled plugin count: {ExMessage}")]
+    static partial void LogFailedToGetEnabledPluginCountExmessage(ILogger<PluginsController> logger, string ExMessage);
 }

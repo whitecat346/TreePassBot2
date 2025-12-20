@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Concurrent;
 using TreePassBot2.Core.Entities;
 using TreePassBot2.Data;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
@@ -11,7 +12,7 @@ public class UserManageService(
     ICommunicationService communication)
 {
     private List<GroupInfo> _groups = [];
-    private readonly Dictionary<ulong, List<QqUserInfo>> _users = [];
+    private readonly ConcurrentDictionary<ulong, List<QqUserInfo>> _users = [];
 
     public IReadOnlyList<GroupInfo> Groups => _groups.AsReadOnly();
 
@@ -27,13 +28,13 @@ public class UserManageService(
             }
 
             var memberList = await FetchMemberListFromSourceAsync(groupId).ConfigureAwait(false);
-            _users[groupId] = await FetchMemberListFromSourceAsync(groupId).ConfigureAwait(false);
+            _users.AddOrUpdate(groupId, _ => memberList, (_, _) => memberList);
 
             return memberList;
         }
 
         var remoteMembers = await FetchMemberListFromSourceAsync(groupId).ConfigureAwait(false);
-        _users.Add(groupId, remoteMembers);
+        _users.TryAdd(groupId, remoteMembers);
 
         return remoteMembers;
     }
@@ -71,7 +72,7 @@ public class UserManageService(
             await db.SaveChangesAsync().ConfigureAwait(false);
         }
 
-        _users[groupId] = remoteMembers;
+        _users.AddOrUpdate(groupId, _ => remoteMembers, (_, _) => remoteMembers);
 
         return remoteMembers;
     }

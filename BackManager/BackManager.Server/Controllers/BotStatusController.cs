@@ -1,6 +1,7 @@
 using BackManager.Server.Models;
 using Microsoft.AspNetCore.Mvc;
 using TreePassBot2.BotEngine.Services;
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 
 namespace BackManager.Server.Controllers;
 
@@ -13,8 +14,9 @@ namespace BackManager.Server.Controllers;
 /// <param name="runtimeInfo">机器人运行时信息</param>
 [ApiController]
 [Route("api/bot")]
-public class BotStatusController(
+public partial class BotStatusController(
     AppRuntimeInfo runtimeInfo,
+    ICommunicationService communicationService,
     ILogger<BotStatusController> logger) : ControllerBase
 {
     private readonly string _status = "Running";
@@ -40,8 +42,25 @@ public class BotStatusController(
         }
         catch (Exception ex)
         {
-            logger.LogError("Failed to get bot status: {Error}", ex.Message);
+            LogFailedToGetBotStatusErrormessage(logger, ex.Message);
             return StatusCode(500, ApiResponse<object>.Error($"获取机器人状态失败: {ex.Message}"));
         }
     }
+
+    [HttpPost("start")]
+    public async Task<IActionResult> StartBot()
+    {
+        await communicationService.ConnectAsync().ConfigureAwait(false);
+        return Ok(ApiResponse<object>.Ok(null, "启动机器人成功"));
+    }
+
+    [HttpPost("stop")]
+    public async Task<IActionResult> StopBot()
+    {
+        await communicationService.DisconnectAsync().ConfigureAwait(false);
+        return Ok(ApiResponse<object>.Ok(null, "停止机器人成功"));
+    }
+
+    [LoggerMessage(LogLevel.Error, "Failed to get bot status: {ErrorMessage}")]
+    static partial void LogFailedToGetBotStatusErrormessage(ILogger<BotStatusController> logger, string ErrorMessage);
 }
