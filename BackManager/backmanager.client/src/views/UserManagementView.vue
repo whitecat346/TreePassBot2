@@ -74,13 +74,6 @@
                     border
                     stripe
                     :header-cell-style="{ background: '#fafafa' }">
-            <!-- 头像列 -->
-            <el-table-column label="头像" width="80" align="center">
-              <template #default="{ row }">
-                <Avatar :src="row.avatar" :username="row.username" size="sm" rounded />
-              </template>
-            </el-table-column>
-
             <!-- 用户名列 -->
             <el-table-column prop="username" label="用户名" min-width="120">
               <template #default="{ row }">
@@ -150,13 +143,6 @@
                width="500px"
                :before-close="handleCloseDetail">
       <div v-if="selectedMember" class="member-detail-content">
-        <div class="flex items-center justify-center mb-6">
-          <Avatar :src="selectedMember.avatar"
-                  :username="selectedMember.username"
-                  size="lg"
-                  rounded />
-        </div>
-
         <el-descriptions :column="1" border>
           <el-descriptions-item label="用户ID">
             {{ selectedMember.userId }}
@@ -203,7 +189,6 @@ import { ElMessage } from 'element-plus';
 import { ChatDotRound } from '@element-plus/icons-vue';
 
 // 导入通用组件
-import Avatar from '../components/common/BaseAvatar.vue';
 import StatusBadge from '../components/common/StatusBadge.vue';
 import EmptyState from '../components/common/EmptyState.vue';
 
@@ -298,7 +283,7 @@ const fetchGroups = async () => {
       if (groups.value.length > 0) {
         selectedGroup.value = groups.value[0] || null;
         if (selectedGroup.value) {
-          fetchGroupMembers(selectedGroup.value.id);
+          fetchGroupMembers(selectedGroup.value.groupId);
         }
       }
     }
@@ -333,7 +318,7 @@ const fetchGroupMembers = async (groupId: string) => {
 // 处理群组点击
 const handleGroupClick = (data: Group) => {
   selectedGroup.value = data;
-  fetchGroupMembers(data.id);
+  fetchGroupMembers(data.groupId);
 };
 
 // 处理成员分页大小变化
@@ -341,7 +326,7 @@ const handleMemberPageSizeChange = (size: number) => {
   memberPageSize.value = size;
   memberCurrentPage.value = 1;
   if (selectedGroup.value) {
-    fetchGroupMembers(selectedGroup.value.id);
+    fetchGroupMembers(selectedGroup.value.groupId);
   }
 };
 
@@ -349,7 +334,7 @@ const handleMemberPageSizeChange = (size: number) => {
 const handleMemberPageChange = (page: number) => {
   memberCurrentPage.value = page;
   if (selectedGroup.value) {
-    fetchGroupMembers(selectedGroup.value.id);
+    fetchGroupMembers(selectedGroup.value.groupId);
   }
 };
 
@@ -379,7 +364,7 @@ onMounted(() => {
   }
 
   .member-detail-content {
-    padding: 20px 0;
+    padding: 10px 0;
   }
 
   .dialog-footer {

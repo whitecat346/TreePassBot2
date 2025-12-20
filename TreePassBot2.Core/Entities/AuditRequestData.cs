@@ -6,11 +6,12 @@ namespace TreePassBot2.Core.Entities;
 public record AuditRequestData
 {
     public Guid Id { get; set; }
-    public ulong RequestQqId { get; set; }
-    public ulong TargetGroupId { get; set; }
+    public ulong UserId { get; set; }
+    public ulong GroupId { get; set; }
+    public string GroupName { get; set; } = string.Empty;
 
     [MaxLength(10)]
-    public required string Passcode { get; set; }
+    public required string VerificationCode { get; set; }
 
     public AuditStatus Status { get; set; } = AuditStatus.Pending;
     public string? RejectReason { get; set; }

@@ -3,8 +3,9 @@ using TreePassBot2.Core.Entities.Enums;
 namespace TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MetaInfo;
 
 public record MemberInfo(
-    ulong GroupId,
-    ulong UserId,
+    ulong QqId,
+    string UserName,
     string NickName,
-    UserRole Role
+    UserRole Role,
+    DateTimeOffset JoinedAt
 );

@@ -106,23 +106,15 @@
             <div class="space-y-4">
               <div v-for="message in dateGroup"
                    :key="message.id"
-                   class="message-item flex gap-3"
+                   class="message-item flex"
                    :class="{ 'recalled-message': message.isRecalled }">
-                <!-- 头像 -->
-                <div class="message-avatar flex-shrink-0">
-                  <Avatar :src="null"
-                          :username="message.username"
-                          size="sm"
-                          rounded />
-                </div>
-
                 <!-- 消息内容 -->
                 <div class="message-content flex-1">
                   <!-- 消息头部：用户名和时间 -->
                   <div class="message-header flex items-center space-x-2 mb-1">
                     <span class="message-username font-medium">{{ message.username }}</span>
                     <span class="message-time text-xs text-gray-500">
-                      {{ formatTime(message.sendTime) }}
+                      {{ formatTime(message.sendAt) }}
                     </span>
 
                     <!-- 撤回标记 -->
@@ -208,7 +200,6 @@ import { ElMessage, ElIcon } from 'element-plus';
 import { Loading, ArrowDownBold } from '@element-plus/icons-vue';
 
 // 导入通用组件
-import Avatar from '../components/common/BaseAvatar.vue';
 import EmptyState from '../components/common/EmptyState.vue';
 
 // 响应式数据
@@ -270,7 +261,7 @@ const filteredMessages = computed(() => {
 // 按日期分组的消息
 const groupedMessages = computed(() => {
   return filteredMessages.value.reduce((groups, message) => {
-    const date = new Date(message.sendTime).toISOString().split('T')[0] || 'unknown';
+    const date = new Date(message.sendAt).toISOString().split('T')[0] || 'unknown';
     if (!groups[date]) {
       groups[date] = [];
     }

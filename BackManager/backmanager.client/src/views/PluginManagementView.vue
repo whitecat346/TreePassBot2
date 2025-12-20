@@ -3,8 +3,7 @@
     <template #header>
       <div class="card-header">
         <span>插件管理</span>
-        <!-- 新增：上传插件组件 -->
-        <el-upload action="http://localhost:5000/api/plugins/upload"
+        <el-upload action="/api/plugins/upload"
                    name="pluginFile"
                    :show-file-list="false"
                    :on-success="handleUploadSuccess"

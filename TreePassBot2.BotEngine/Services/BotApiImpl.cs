@@ -16,7 +16,7 @@ public class BotApiImpl(MessageArchiveService archiveService, ICommunicationServ
         communicationService.GetGroupMemberInfoAsync(GroupId, memberId);
 
     /// <inheritdoc />
-    public Task<IEnumerable<MemberInfo>?> GetGroupMemberListAsync() =>
+    public Task<List<MemberInfo>?> GetGroupMemberListAsync() =>
         communicationService.GetGroupMemberListAsync(GroupId);
 
     /// <inheritdoc />

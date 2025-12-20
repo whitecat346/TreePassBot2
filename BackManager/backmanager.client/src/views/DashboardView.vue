@@ -168,7 +168,7 @@ const serverStatus = ref<ServerStatus>({
   memoryUsage: 0,
   diskUsage: 0,
   uptime: '0 days 00:00:00',
-  timestamp: new Date().toISOString()
+  timestamp: "1970-01-01T00:00:00Z"
 });
 
 // 定时器ID
@@ -272,11 +272,11 @@ const initData = async () => {
 onMounted(() => {
   initData();
 
-  // 启动定时刷新（每30秒）
+  // 启动定时刷新（每10秒）
   timerId.value = window.setInterval(() => {
     fetchBotStatus();
     fetchServerStatus();
-  }, 30000);
+  }, 10000);
 });
 
 // 组件卸载时清理定时器

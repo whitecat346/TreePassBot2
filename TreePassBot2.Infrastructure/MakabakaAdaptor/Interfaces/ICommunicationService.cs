@@ -1,4 +1,5 @@
 using Makabaka;
+using TreePassBot2.Core.Entities;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MetaInfo;
@@ -64,7 +65,7 @@ public interface ICommunicationService
     /// </summary>
     /// <param name="groupId">Target group id.</param>
     /// <returns>User info list. Will return <see langword="null"/> if not found.</returns>
-    Task<IEnumerable<MemberInfo>?> GetGroupMemberListAsync(ulong groupId);
+    Task<List<MemberInfo>?> GetGroupMemberListAsync(ulong groupId);
 
     /// <summary>
     /// Kick a member from group.
@@ -81,6 +82,12 @@ public interface ICommunicationService
     Task WithdrawMessageAsync(long messageId);
 
     /// <summary>
+    /// Get group info.
+    /// </summary>
+    /// <param name="groupId">Target group id.</param>
+    Task<GroupInfo?> GetGroupInfoAsync(ulong groupId);
+
+    /// <summary>
     /// Connect to Websocket Server.
     /// </summary>
     Task ConnectAsync();
@@ -89,4 +96,9 @@ public interface ICommunicationService
     /// Disconnect from Websocket Server.
     /// </summary>
     Task DisconnectAsync();
+
+    /// <summary>
+    /// Get group list.
+    /// </summary>
+    Task<List<GroupInfo>?> GetGroupListAsync();
 }

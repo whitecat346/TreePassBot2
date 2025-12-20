@@ -1,7 +1,6 @@
 using BackManager.Server.Models;
 using Microsoft.AspNetCore.Mvc;
 using TreePassBot2.BotEngine.Services;
-using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 
 namespace BackManager.Server.Controllers;
 
@@ -11,17 +10,14 @@ namespace BackManager.Server.Controllers;
 /// <remarks>
 /// 机器人状态控制器构造函数
 /// </remarks>
-/// <param name="communicationService">通信服务</param>
-/// <param name="botHost">机器人主机服务</param>
+/// <param name="runtimeInfo">机器人运行时信息</param>
 [ApiController]
 [Route("api/bot")]
 public class BotStatusController(
-    ICommunicationService communicationService,
-    BotHost botHost,
+    AppRuntimeInfo runtimeInfo,
     ILogger<BotStatusController> logger) : ControllerBase
 {
-    private DateTimeOffset? _startTime;
-    private string _status = "Stopped";
+    private readonly string _status = "Running";
 
     /// <summary>
     /// 获取机器人状态
@@ -32,12 +28,11 @@ public class BotStatusController(
     {
         try
         {
-            // TODO; impl runtime info get
             var botStatus = new
             {
                 Status = _status,
-                StartTime = _startTime?.ToString("O"),
-                Version = "1.0.0",
+                StartTime = runtimeInfo.Uptime.ToString("g"),
+                Version = runtimeInfo.CurrentVersion,
                 Protocol = "OneBot 11"
             };
 

@@ -10,11 +10,13 @@ public record MessageLog
     public long MessageId { get; set; }
 
     public ulong GroupId { get; set; }
+    public string GroupName { get; set; } = string.Empty;
     public ulong UserId { get; set; }
-    public string? UserNickName { get; set; }
-    public string ContentText { get; set; } = string.Empty;
+    public string? UserName { get; set; }
+    public string Content { get; set; } = string.Empty;
 
     public DateTimeOffset SendAt { get; set; } = DateTimeOffset.UtcNow;
-    public bool IsWithdrawed { get; set; } = false;
-    public ulong? WithdrawedBy { get; set; }
+    public bool IsRecalled { get; set; } = false;
+    public ulong? RecalledBy { get; set; }
+    public DateTimeOffset? RecalledAt { get; set; }
 }

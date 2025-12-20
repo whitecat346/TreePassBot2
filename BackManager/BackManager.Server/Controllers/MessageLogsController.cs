@@ -15,7 +15,7 @@ namespace BackManager.Server.Controllers;
 /// <param name="dbContext">数据库上下文</param>
 [ApiController]
 [Route("api/messages")]
-public class MessageLogsController(
+public partial class MessageLogsController(
     BotDbContext dbContext,
     ILogger<MessageLogsController> logger) : ControllerBase
 {
@@ -77,11 +77,11 @@ public class MessageLogsController(
                 GroupId = m.GroupId,
                 GroupName = m.GroupId,
                 UserId = m.UserId.ToString(),
-                Username = m.UserNickName ?? $"用户{m.UserId}",
-                Content = m.ContentText,
+                Username = m.UserName ?? $"用户{m.UserId}",
+                Content = m.Content,
                 SendTime = m.SendAt.ToString("O"),
-                IsRecalled = m.IsWithdrawed,
-                RecalledBy = m.WithdrawedBy?.ToString(),
+                IsRecalled = m.IsRecalled,
+                RecalledBy = m.RecalledBy?.ToString(),
                 RecalledAt = string.Empty
             }).ToImmutableList();
 
@@ -97,7 +97,7 @@ public class MessageLogsController(
         }
         catch (Exception ex)
         {
-            logger.LogError("Failed to get message log: {Error}", ex.Message);
+            LogFailedToGetMessageLogError(logger, ex.Message);
             return StatusCode(500, ApiResponse<object>.Error($"获取消息日志失败: {ex.Message}"));
         }
     }
@@ -129,11 +129,11 @@ public class MessageLogsController(
                 GroupId = messageLog.GroupId.ToString(),
                 GroupName = $"群组{messageLog.GroupId}",
                 UserId = messageLog.UserId.ToString(),
-                Username = messageLog.UserNickName ?? $"用户{messageLog.UserId}",
-                Content = messageLog.ContentText,
-                SendTime = messageLog.SendAt.ToString("o"),
-                IsRecalled = messageLog.IsWithdrawed,
-                RecalledBy = messageLog.WithdrawedBy?.ToString(),
+                Username = messageLog.UserName ?? $"用户{messageLog.UserId}",
+                Content = messageLog.Content,
+                SendTime = messageLog.SendAt.ToString("s"),
+                IsRecalled = messageLog.IsRecalled,
+                RecalledBy = messageLog.RecalledBy?.ToString(),
                 RecalledAt = string.Empty
             };
 
@@ -141,8 +141,14 @@ public class MessageLogsController(
         }
         catch (Exception ex)
         {
-            logger.LogError("Failed to get message datails: {Error}", ex.Message);
+            LogFailedToGetMessageDatailsError(logger, ex.Message);
             return StatusCode(500, ApiResponse<object>.Error($"获取消息详情失败: {ex.Message}"));
         }
     }
+
+    [LoggerMessage(LogLevel.Error, "Failed to get message log: {error}")]
+    static partial void LogFailedToGetMessageLogError(ILogger<MessageLogsController> logger, string error);
+
+    [LoggerMessage(LogLevel.Error, "Failed to get message datails: {error}")]
+    static partial void LogFailedToGetMessageDatailsError(ILogger<MessageLogsController> logger, string error);
 }

@@ -1,6 +1,6 @@
 using BackManager.Server.Models;
 using Microsoft.AspNetCore.Mvc;
-using TreePassBot2.Data;
+using TreePassBot2.BotEngine.Services;
 
 // ReSharper disable ComplexConditionExpression
 
@@ -12,11 +12,11 @@ namespace BackManager.Server.Controllers;
 /// <remarks>
 /// 群组管理控制器构造函数
 /// </remarks>
-/// <param name="dbContext">数据库上下文</param>
+/// <param name="userManage">用户管理服务</param>
 [ApiController]
 [Route("api/[controller]")]
 public class GroupsController(
-    BotDbContext dbContext,
+    UserManageService userManage,
     ILogger<GroupsController> logger) : ControllerBase
 {
     /// <summary>
@@ -28,33 +28,7 @@ public class GroupsController(
     {
         try
         {
-            var groups = new List<object>
-            {
-                new
-                {
-                    Id = "1",
-                    Name = "测试群组1",
-                    MemberCount = 100,
-                    OwnerId = "owner1",
-                    CreatedAt = DateTime.UtcNow.AddMonths(-2).ToString("o")
-                },
-                new
-                {
-                    Id = "2",
-                    Name = "测试群组2",
-                    MemberCount = 200,
-                    OwnerId = "owner2",
-                    CreatedAt = DateTime.UtcNow.AddMonths(-1).ToString("o")
-                },
-                new
-                {
-                    Id = "3",
-                    Name = "测试群组3",
-                    MemberCount = 50,
-                    OwnerId = "owner3",
-                    CreatedAt = DateTime.UtcNow.AddDays(-10).ToString("o")
-                }
-            };
+            var groups = await userManage.GetGroupListFromApiAsync().ConfigureAwait(false);
 
             return Ok(ApiResponse<object>.Ok(groups, "获取群组列表成功"));
         }

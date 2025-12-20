@@ -14,6 +14,18 @@ builder.AddServiceDefaults();
 // bot own services
 builder.Services.AddBotServices(builder.Configuration);
 
+// 添加CORS服务配置
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins",
+        policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
+
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
@@ -36,6 +48,9 @@ app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+// 添加CORS中间件
+app.UseCors("AllowAllOrigins");
 
 // 添加全局异常处理中间件
 app.UseMiddleware<BackManager.Server.Middleware.GlobalExceptionHandler>();

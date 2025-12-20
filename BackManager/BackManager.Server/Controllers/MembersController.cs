@@ -1,7 +1,6 @@
 using BackManager.Server.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using TreePassBot2.Data;
+using TreePassBot2.BotEngine.Services;
 
 // ReSharper disable ComplexConditionExpression
 
@@ -17,7 +16,7 @@ namespace BackManager.Server.Controllers;
 [ApiController]
 [Route("api/groups/{groupId}/members")]
 public class MembersController(
-    BotDbContext dbContext,
+    UserManageService userManage,
     ILogger<MembersController> logger) : ControllerBase
 {
     /// <summary>
@@ -30,11 +29,13 @@ public class MembersController(
     {
         try
         {
-            var users = await dbContext.Users.ToListAsync().ConfigureAwait(false);
+            var groupIdLong = ulong.Parse(groupId);
+
+            var users = await userManage.GetMemberListFromApiAsync(groupIdLong).ConfigureAwait(false);
 
             var members = users.Select((user, index) => new
             {
-                Id = user.Id.ToString(),
+                Id = user.QqId.ToString(),
                 GroupId = groupId,
                 UserId = user.QqId.ToString(),
                 Username = user.UserName ?? $"用户{user.QqId}",

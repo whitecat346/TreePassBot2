@@ -18,7 +18,7 @@ namespace BackManager.Server.Controllers;
 /// <param name="dbContext">数据库上下文</param>
 [ApiController]
 [Route("api/[controller]")]
-public class AuditsController(
+public partial class AuditsController(
     BotDbContext dbContext,
     ILogger<AuditsController> logger) : ControllerBase
 {
@@ -39,10 +39,10 @@ public class AuditsController(
             var auditRecords = auditRequests.Select(audit => new
             {
                 Id = audit.Id.ToString(),
-                UserId = audit.RequestQqId.ToString(),
-                GroupId = audit.TargetGroupId.ToString(),
+                UserId = audit.UserId.ToString(),
+                GroupId = audit.GroupId.ToString(),
                 Status = audit.Status.ToString(),
-                VerificationCode = audit.Passcode,
+                VerificationCode = audit.VerificationCode,
                 EnteredGroup = audit.Status == AuditStatus.Approved,
                 CreatedAt = audit.CreatedAt.ToString("O"),
                 ProcessedAt = audit.ProcessedAt.ToString("O"),
@@ -53,7 +53,7 @@ public class AuditsController(
         }
         catch (Exception ex)
         {
-            logger.LogError("Failed to get audit records: {Error}", ex.Message);
+            LogFailedToGetAuditRecordsError(logger, ex.Message);
             return StatusCode(500, ApiResponse<object>.Error($"获取审核记录失败: {ex.Message}"));
         }
     }
@@ -88,7 +88,7 @@ public class AuditsController(
         }
         catch (Exception ex)
         {
-            logger.LogError("Failed to approve audit: {Error}", ex.Message);
+            LogFailedToApproveAuditError(logger, ex.Message);
             return StatusCode(500, ApiResponse<object>.Error($"批准审核失败: {ex.Message}"));
         }
     }
@@ -123,8 +123,17 @@ public class AuditsController(
         }
         catch (Exception ex)
         {
-            logger.LogError("Failed to reject audit: {Error}", ex.Message);
+            LogFailedToRejectAuditError(logger, ex.Message);
             return StatusCode(500, ApiResponse<object>.Error($"拒绝审核失败: {ex.Message}"));
         }
     }
+
+    [LoggerMessage(LogLevel.Error, "Failed to get audit records: {error}")]
+    static partial void LogFailedToGetAuditRecordsError(ILogger<AuditsController> logger, string error);
+
+    [LoggerMessage(LogLevel.Error, "Failed to approve audit: {error}")]
+    static partial void LogFailedToApproveAuditError(ILogger<AuditsController> logger, string error);
+
+    [LoggerMessage(LogLevel.Error, "Failed to reject audit: {error}")]
+    static partial void LogFailedToRejectAuditError(ILogger<AuditsController> logger, string error);
 }

@@ -9,15 +9,15 @@ namespace TreePassBot2.Core.Entities;
 public record QqUserInfo
 {
     /// <summary>
-    /// The unique identifier for the user.
-    /// </summary>
-    [Key]
-    public Guid Id { get; set; }
-
-    /// <summary>
     /// User qq id.
     /// </summary>
+    [Key]
     public ulong QqId { get; set; }
+
+    /// <summary>
+    /// Group id that the user belongs to.
+    /// </summary>
+    public ulong GroupId { get; set; }
 
     /// <summary>
     /// User name displaied in QQ or MessageTracker.
@@ -25,17 +25,17 @@ public record QqUserInfo
     public string? UserName { get; set; }
 
     /// <summary>
+    /// Nick name of the user. (The original name)
+    /// </summary>
+    public string? NickName { get; set; }
+
+    /// <summary>
     /// The role of the user.
     /// </summary>
     public UserRole Role { get; set; } = UserRole.Member;
 
     /// <summary>
-    /// The last time the user was seen.
+    /// The time the user joined group.
     /// </summary>
-    public DateTimeOffset LastSeenAt { get; set; } = DateTimeOffset.UtcNow;
-
-    /// <summary>
-    /// The time when the user was created.
-    /// </summary>
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset JoinedAt { get; set; }
 }

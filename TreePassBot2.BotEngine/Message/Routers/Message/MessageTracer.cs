@@ -2,26 +2,44 @@ using TreePassBot2.BotEngine.Interfaces;
 using TreePassBot2.Core.Entities;
 using TreePassBot2.Data;
 using TreePassBot2.Infrastructure.MakabakaAdaptor;
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 
 namespace TreePassBot2.BotEngine.Message.Routers.Message;
 
-public class MessageTracer(BotDbContext db) : IMessageHandler
+public class MessageTracer(
+    BotDbContext db,
+    ICommunicationService communication) : IMessageHandler
 {
     /// <inheritdoc />
-    public Task HandleMessageAsync(MessageEventData data)
+    public async Task HandleMessageAsync(MessageEventData data)
     {
+        string groupName;
+
+        var groupInfo = await db.Groups.FindAsync(data.GroupId).ConfigureAwait(false);
+        if (groupInfo is null)
+        {
+            var featchedGroupInfo = await communication.GetGroupInfoAsync(data.GroupId).ConfigureAwait(false);
+            groupName = featchedGroupInfo is null ? string.Empty : featchedGroupInfo.Name;
+        }
+        else
+        {
+            groupName = groupInfo.Name;
+        }
+
         var msgLog = new MessageLog
         {
             MessageId = data.MessageId,
             GroupId = data.GroupId,
+            GroupName = groupName,
             UserId = data.Sender.Id,
-            UserNickName = string.IsNullOrEmpty(data.Sender.NickName) ? null : data.Sender.NickName,
-            ContentText = data.Message.ToString(),
-            IsWithdrawed = false,
-            WithdrawedBy = null
+            UserName = string.IsNullOrEmpty(data.Sender.NickName) ? null : data.Sender.NickName,
+            Content = data.Message.ToString(),
+            IsRecalled = false,
+            RecalledBy = null,
+            RecalledAt = null
         };
 
         db.MessageLogs.Add(msgLog);
-        return db.SaveChangesAsync();
+        await db.SaveChangesAsync().ConfigureAwait(false);
     }
 }

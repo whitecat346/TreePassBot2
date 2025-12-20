@@ -5,11 +5,11 @@ import type { InternalAxiosRequestConfig } from 'axios';
 
 // 创建axios实例
 const apiClient: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:7248/api',
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 请求超时时间
+  timeout: 5000, // 请求超时时间
 });
 
 // 统一响应类型
@@ -141,20 +141,17 @@ export interface Plugin {
 
 // 用户管理 API
 export interface Group {
-  id: string;
+  groupId: string;
   name: string;
   memberCount: number;
-  ownerId: string;
-  createdAt: string;
+  ownerId: number;
 }
 
 export interface GroupMember {
-  id: string;
   groupId: string;
   userId: string;
   username: string;
   nickname: string;
-  avatar: string | null;
   role: 'Owner' | 'Admin' | 'Member' | 'Bot';
   joinedAt: string;
 }
@@ -184,7 +181,7 @@ export interface MessageLog {
   userId: string;
   username: string;
   content: string;
-  sendTime: string;
+  sendAt: string;
   isRecalled: boolean;
   recalledBy: string | null;
   recalledAt: string | null;
@@ -233,5 +230,4 @@ export const getMessageLogs = (params?: {
 }) => apiClient.get<ApiResponse<MessageLogResponse>>('/messages', { params });
 export const getMessageDetail = (messageId: string) => apiClient.get<ApiResponse<MessageLog>>(`/messages/${messageId}`);
 
-// 导出axios实例，方便在其他地方使用
 export default apiClient;

@@ -5,15 +5,36 @@ using TreePassBot2.Data;
 
 namespace BackManager.Server.Extensions;
 
+/// <summary>
+/// 服务集合扩展类
+/// </summary>
 public static class ServiceCollectionExtensions
 {
+    /// <summary>
+    /// 添加机器人服务
+    /// </summary>
+    /// <param name="services">服务集合</param>
+    /// <param name="configuration">配置信息</param>
+    /// <returns>服务集合</returns>
     public static IServiceCollection AddBotServices(this IServiceCollection services, IConfiguration configuration)
     {
         var connString = configuration.GetConnectionString("DefaultConnection");
 
-        if (string.IsNullOrEmpty(connString))
+        // skip aspire default connection string
+        if (connString?.Contains("Server=localhost;Username=postgres;Database=postgres") == true)
         {
-            connString = "Host=pgsql;Database=treepass_bot;Username=postgres;Password=rtyw3p4f";
+            var configBuilder = new ConfigurationBuilder()
+                               .SetBasePath(Directory.GetCurrentDirectory())
+                               .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                               .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true);
+
+            var fileConfig = configBuilder.Build();
+            var fileConnString = fileConfig.GetConnectionString("DefaultConnection");
+
+            if (!string.IsNullOrEmpty(fileConnString))
+            {
+                connString = fileConnString;
+            }
         }
 
         services.AddDbContextPool<BotDbContext>(options =>

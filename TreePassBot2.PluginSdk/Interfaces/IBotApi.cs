@@ -6,7 +6,7 @@ namespace TreePassBot2.PluginSdk.Interfaces;
 public interface IBotApi
 {
     Task<MemberInfo?> GetMemberInfoAsync(ulong memberId);
-    Task<IEnumerable<MemberInfo>?> GetGroupMemberListAsync();
+    Task<List<MemberInfo>?> GetGroupMemberListAsync();
     Task WithdrawMessageAsync(long messageId);
     Task KickMemberAsync(ulong memberId, bool rejectRequest = false);
     Task<List<Message>?> GetForwardMessageAsync(string forwardId);

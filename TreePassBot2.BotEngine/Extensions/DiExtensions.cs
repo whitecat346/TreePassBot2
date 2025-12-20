@@ -16,6 +16,8 @@ public static class DiExtensions
                 .AddSingleton<MessageRouter>()
                 .AddSingleton<MessageArchiveService>()
                 .AddSingleton<BotEventRouter>()
+                .AddSingleton<AppRuntimeInfo>()
+                .AddSingleton<UserManageService>()
                 .AddSingleton<ICommunicationService, MakabakaService>();
 
         return services;

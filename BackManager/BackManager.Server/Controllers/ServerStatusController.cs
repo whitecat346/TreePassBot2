@@ -1,5 +1,6 @@
 using BackManager.Server.Models;
 using Microsoft.AspNetCore.Mvc;
+using TreePassBot2.BotEngine.Services;
 
 namespace BackManager.Server.Controllers;
 
@@ -8,24 +9,26 @@ namespace BackManager.Server.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/server")]
-public class ServerStatusController(ILogger<ServerStatusController> logger) : ControllerBase
+public class ServerStatusController(
+    AppRuntimeInfo runtimeInfo,
+    ILogger<ServerStatusController> logger) : ControllerBase
 {
     /// <summary>
     /// 获取服务器状态
     /// </summary>
     /// <returns>服务器状态</returns>
     [HttpGet("status")]
-    public IActionResult GetServerStatus()
+    public async Task<IActionResult> GetServerStatus()
     {
         try
         {
             var serverStatus = new
             {
-                CpuUsage = 45.2,
-                MemoryUsage = 67.8,
-                DiskUsage = 82.3,
-                Uptime = "5 days 12:34:56",
-                Timestamp = DateTime.UtcNow.ToString("o")
+                CpuUsage = await runtimeInfo.GetCpuUsageAsync().ConfigureAwait(false),
+                MemoryUsage = runtimeInfo.GetMemoryUsage(),
+                DiskUsage = runtimeInfo.GetDiskUsage(),
+                Uptime = runtimeInfo.Uptime.ToString("g"),
+                Timestamp = DateTime.UtcNow.ToString("s")
             };
 
             return Ok(ApiResponse<object>.Ok(serverStatus, "获取服务器状态成功"));

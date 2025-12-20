@@ -7,6 +7,7 @@ using TreePassBot2.Infrastructure.MakabakaAdaptor.Converters;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MetaInfo;
+using GroupInfo = TreePassBot2.Core.Entities.GroupInfo;
 using MessageBuilder = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageBuilder;
 
 namespace TreePassBot2.Infrastructure.Services;
@@ -190,18 +191,18 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
             return null;
         }
 
-        var mamberInfo = ConvertToQqUserInfo(data);
+        var mamberInfo = ConvertToMyMemberInfo(data);
 
         return mamberInfo;
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<MemberInfo>?> GetGroupMemberListAsync(ulong groupId)
+    public async Task<List<MemberInfo>?> GetGroupMemberListAsync(ulong groupId)
     {
         var apiRep = await _makabakaApp.BotContext.GetGroupMemberListAsync(groupId).ConfigureAwait(false);
         var data = apiRep.Data;
 
-        var memberInfoList = data?.Select(ConvertToQqUserInfo);
+        var memberInfoList = data?.Select(ConvertToMyMemberInfo).ToList();
         return memberInfoList;
     }
 
@@ -212,6 +213,29 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
     /// <inheritdoc />
     public Task WithdrawMessageAsync(long messageId) =>
         _makabakaApp.BotContext.RevokeMessageAsync(messageId);
+
+    /// <inheritdoc />
+    public async Task<GroupInfo?> GetGroupInfoAsync(ulong groupId)
+    {
+        var response = await _makabakaApp.BotContext.GetGroupInfoAsync(groupId).ConfigureAwait(false);
+
+        var data = response.Data;
+        if (data is null)
+        {
+            return null;
+        }
+
+        // convert
+        var groupInfo = new GroupInfo
+        {
+            GroupId = data.GroupId,
+            Name = data.GroupName,
+            MemberCount = data.MemberCount,
+            OwnerId = 0 // TODO: i will impl this later
+        };
+
+        return groupInfo;
+    }
 
     /// <inheritdoc />
     public Task ConnectAsync()
@@ -225,11 +249,30 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
         return _makabakaApp.StopAsync();
     }
 
-    private MemberInfo ConvertToQqUserInfo(GroupMemberInfo memberInfo) =>
-        new(memberInfo.GroupId,
-            memberInfo.UserId,
+    /// <inheritdoc />
+    public async Task<List<GroupInfo>?> GetGroupListAsync()
+    {
+        var response = await _makabakaApp.BotContext.GetGroupListAsync().ConfigureAwait(false);
+        var data = response.Data;
+
+        // convert
+        var res = data?.Select(group => new GroupInfo
+        {
+            GroupId = group.GroupId,
+            Name = group.GroupName,
+            MemberCount = group.MemberCount,
+            OwnerId = 0 // TODO: i will impl this later
+        }).ToList();
+
+        return res;
+    }
+
+    private MemberInfo ConvertToMyMemberInfo(GroupMemberInfo memberInfo) =>
+        new(memberInfo.UserId,
             memberInfo.Nickname,
-            ConverteToMyRole(memberInfo.Role));
+            memberInfo.Nickname,
+            ConverteToMyRole(memberInfo.Role),
+            memberInfo.JoinTime);
 
     private static UserRole ConverteToMyRole(GroupRoleType roleType) =>
         roleType switch

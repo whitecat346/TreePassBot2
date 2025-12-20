@@ -6,7 +6,7 @@ using TreePassBot2.Data;
 
 namespace TreePassBot2.BotEngine.Services;
 
-public class MessageArchiveService(
+public partial class MessageArchiveService(
     IServiceProvider serviceProvider,
     ILogger<MessageArchiveService> logger)
 {
@@ -36,9 +36,9 @@ public class MessageArchiveService(
             MessageId = log.MessageId,
             GroupId = log.GroupId,
             UserId = log.UserId,
-            UserNickName = log.UserNickName,
-            ContentText = log.ContentText,
-            IsWithdrawed = log.IsWithdrawed,
+            UserNickName = log.UserName,
+            ContentText = log.Content,
+            IsWithdrawed = log.IsRecalled,
             SendAt = log.SendAt,
             ArchiveReason = reason,
             OperatorId = operatorId,
@@ -49,7 +49,12 @@ public class MessageArchiveService(
 
         await db.SaveChangesAsync().ConfigureAwait(false);
 
-        logger.LogInformation("Archived {Count} messages before {MessageId} in group {Group}.\t\n Reason: {Reason}",
-                              recentLogs.Count, startMessageId, groupId, reason);
+        LogArchivedCountMessagesBeforeMessageidInGroupGroupReasonReason(logger, recentLogs.Count, startMessageId,
+                                                                        groupId, reason);
     }
+
+    [LoggerMessage(LogLevel.Information,
+                   "Archived {Count} messages before {MessageId} in group {Group}.\t\n Reason: {Reason}")]
+    static partial void LogArchivedCountMessagesBeforeMessageidInGroupGroupReasonReason(
+        ILogger<MessageArchiveService> logger, int Count, long MessageId, ulong Group, string Reason);
 }

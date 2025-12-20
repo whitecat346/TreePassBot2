@@ -5,6 +5,7 @@ namespace TreePassBot2.Data;
 
 public class BotDbContext(DbContextOptions<BotDbContext> options) : DbContext(options)
 {
+    public DbSet<GroupInfo> Groups { get; set; }
     public DbSet<QqUserInfo> Users { get; set; }
     public DbSet<AuditRequestData> AuditRequests { get; set; }
     public DbSet<MessageLog> MessageLogs { get; set; }
@@ -16,23 +17,32 @@ public class BotDbContext(DbContextOptions<BotDbContext> options) : DbContext(op
     {
         base.OnModelCreating(modelBuilder);
 
+        // groups
+        modelBuilder.Entity<GroupInfo>()
+                    .HasIndex(group => group.GroupId)
+                    .IsUnique();
+
+        // users
         modelBuilder.Entity<QqUserInfo>()
                     .HasIndex(user => user.QqId)
                     .IsUnique();
 
+        // audits
         modelBuilder.Entity<AuditRequestData>()
-                    .HasIndex(audit => audit.Passcode);
+                    .HasIndex(audit => audit.VerificationCode);
         modelBuilder.Entity<AuditRequestData>()
                     .HasIndex(audit => new
                     {
-                        audit.RequestQqId,
+                        RequestQqId = audit.UserId,
                         audit.Status
                     });
 
+        // message logs
         modelBuilder.Entity<MessageLog>()
                     .HasIndex(msg => msg.SendAt);
         modelBuilder.Entity<MessageLog>()
-                    .HasIndex(msg => msg.MessageId);
+                    .HasIndex(msg => msg.MessageId)
+                    .IsUnique();
         modelBuilder.Entity<MessageLog>()
                     .HasIndex(msg => new
                     {
@@ -41,15 +51,17 @@ public class BotDbContext(DbContextOptions<BotDbContext> options) : DbContext(op
                         msg.SendAt
                     });
         modelBuilder.Entity<MessageLog>()
-                    .HasIndex(msg => msg.UserNickName)
-                    .HasFilter("UserNickName IS NOT NULL");
+                    .HasIndex(msg => msg.UserName);
+        //.HasFilter("\"UserName\" IS NOT NULL");
 
+        // archive message logs
         modelBuilder.Entity<ArchivedMessageLog>()
                     .HasIndex(msg => new { msg.GroupId, msg.UserId });
         modelBuilder.Entity<ArchivedMessageLog>()
-                    .HasIndex(msg => msg.UserNickName)
-                    .HasFilter("UserNickName IS NOT NULL");
+                    .HasIndex(msg => msg.UserNickName);
+        //.HasFilter("\"UserNickName\" IS NOT NULL");
 
+        // plugin states
         modelBuilder.Entity<PluginState>()
                     .HasKey(plg => new
                     {

@@ -20,8 +20,8 @@ public static class WithdrawMessageFlagger
             return;
         }
 
-        message.IsWithdrawed = true;
-        message.WithdrawedBy = operatorId;
+        message.IsRecalled = true;
+        message.RecalledBy = operatorId;
 
         await dbContext.SaveChangesAsync().ConfigureAwait(false);
     }

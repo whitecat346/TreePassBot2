@@ -12,8 +12,8 @@ using TreePassBot2.Data;
 namespace TreePassBot2.Data.Migrations
 {
     [DbContext(typeof(BotDbContext))]
-    [Migration("20251208150345_AddAutoCleanupJob")]
-    partial class AddAutoCleanupJob
+    [Migration("20251220132156_AutoCleanupJob")]
+    partial class AutoCleanupJob
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -67,8 +67,7 @@ namespace TreePassBot2.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserNickName")
-                        .HasFilter("UserNickName IS NOT NULL");
+                    b.HasIndex("UserNickName");
 
                     b.HasIndex("GroupId", "UserId");
 
@@ -87,34 +86,64 @@ namespace TreePassBot2.Data.Migrations
                     b.Property<DateTimeOffset>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("FormDataJson")
-                        .IsRequired()
-                        .HasColumnType("jsonb");
+                    b.Property<decimal>("GroupId")
+                        .HasColumnType("numeric(20,0)");
 
-                    b.Property<string>("Passcode")
+                    b.Property<string>("GroupName")
                         .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("ProcessedBy")
+                        .HasColumnType("numeric(20,0)");
 
                     b.Property<string>("RejectReason")
                         .HasColumnType("text");
 
-                    b.Property<decimal>("RequestQqId")
-                        .HasColumnType("numeric(20,0)");
-
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("TargetGroupId")
+                    b.Property<decimal>("UserId")
                         .HasColumnType("numeric(20,0)");
+
+                    b.Property<string>("VerificationCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Passcode");
+                    b.HasIndex("VerificationCode");
 
-                    b.HasIndex("RequestQqId", "Status");
+                    b.HasIndex("UserId", "Status");
 
                     b.ToTable("AuditRequests");
+                });
+
+            modelBuilder.Entity("TreePassBot2.Core.Entities.GroupInfo", b =>
+                {
+                    b.Property<decimal>("GroupId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(20,0)");
+
+                    b.Property<int>("MemberCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("OwnerId")
+                        .HasColumnType("numeric(20,0)");
+
+                    b.HasKey("GroupId");
+
+                    b.HasIndex("GroupId")
+                        .IsUnique();
+
+                    b.ToTable("Groups");
                 });
 
             modelBuilder.Entity("TreePassBot2.Core.Entities.MessageLog", b =>
@@ -125,18 +154,28 @@ namespace TreePassBot2.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("ContentText")
+                    b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<decimal>("GroupId")
                         .HasColumnType("numeric(20,0)");
 
-                    b.Property<bool>("IsWithdrawed")
+                    b.Property<string>("GroupName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsRecalled")
                         .HasColumnType("boolean");
 
                     b.Property<long>("MessageId")
                         .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("RecalledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("RecalledBy")
+                        .HasColumnType("numeric(20,0)");
 
                     b.Property<DateTimeOffset>("SendAt")
                         .HasColumnType("timestamp with time zone");
@@ -144,20 +183,17 @@ namespace TreePassBot2.Data.Migrations
                     b.Property<decimal>("UserId")
                         .HasColumnType("numeric(20,0)");
 
-                    b.Property<string>("UserNickName")
+                    b.Property<string>("UserName")
                         .HasColumnType("text");
-
-                    b.Property<decimal?>("WithdrawedBy")
-                        .HasColumnType("numeric(20,0)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MessageId");
+                    b.HasIndex("MessageId")
+                        .IsUnique();
 
                     b.HasIndex("SendAt");
 
-                    b.HasIndex("UserNickName")
-                        .HasFilter("UserNickName IS NOT NULL");
+                    b.HasIndex("UserName");
 
                     b.HasIndex("GroupId", "UserId", "SendAt");
 
@@ -191,20 +227,20 @@ namespace TreePassBot2.Data.Migrations
                     b.ToTable("PluginStates");
                 });
 
-            modelBuilder.Entity("TreePassBot2.Core.Entities.QqUser", b =>
+            modelBuilder.Entity("TreePassBot2.Core.Entities.QqUserInfo", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset>("LastSeenAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<decimal>("QqId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("numeric(20,0)");
+
+                    b.Property<decimal>("GroupId")
+                        .HasColumnType("numeric(20,0)");
+
+                    b.Property<DateTimeOffset>("JoinedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NickName")
+                        .HasColumnType("text");
 
                     b.Property<int>("Role")
                         .HasColumnType("integer");
@@ -212,7 +248,7 @@ namespace TreePassBot2.Data.Migrations
                     b.Property<string>("UserName")
                         .HasColumnType("text");
 
-                    b.HasKey("Id");
+                    b.HasKey("QqId");
 
                     b.HasIndex("QqId")
                         .IsUnique();
