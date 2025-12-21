@@ -64,33 +64,23 @@ jobs:
     # -----------------------------
     # 4. 发布（非容器化 ZIP）
     # -----------------------------
-    - name: Publish (zip)
+    - name: Publish
       run: |
         dotnet publish \
           -c Release \
           -r linux-x64 \
           --self-contained false \
-          -p:Version=${{ env.VERSION }} \
-          -p:AssemblyVersion=${{ env.VERSION }} \
-          -p:FileVersion=${{ env.VERSION }} \
-          -p:InformationalVersion=${{ env.VERSION }} \
+          -p:Version=${{ env.BASE_VERSION }} \
+          -p:AssemblyVersion=${{ env.BASE_VERSION }}.0 \
+          -p:FileVersion=${{ env.BASE_VERSION }}.0 \
+          -p:InformationalVersion=${{ env.INFO_VERSION }} \
           -o publish
 
         cd publish
         zip -r ../app-${{ env.VERSION }}.zip .
-
+        
     # -----------------------------
-    # 5. 构建 Docker 镜像（可选）
-    # -----------------------------
-    - name: Build Docker image
-      run: |
-        docker build \
-          -t myapp:${{ env.VERSION }} \
-          -t myapp:latest \
-          .
-
-    # -----------------------------
-    # 6. 创建 GitHub Release
+    # 5. 创建 GitHub Release
     # -----------------------------
     - name: Create Release
       uses: softprops/action-gh-release@v2
