@@ -35,18 +35,23 @@ jobs:
     - name: Generate release notes
       id: notes
       run: |
-        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        set -e
+    
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
         echo "Last tag: $LAST_TAG"
-
+    
         if [ -z "$LAST_TAG" ]; then
-          git log --pretty=format:"- %h %s" > release_notes.txt
+          NOTES=$(git log --pretty=format:"- %h %s")
         else
-          git log $LAST_TAG..HEAD --pretty=format:"- %h %s" > release_notes.txt
+          NOTES=$(git log "$LAST_TAG"..HEAD --pretty=format:"- %h %s")
         fi
-
-        echo "notes<<EOF" >> $GITHUB_OUTPUT
-        cat release_notes.txt >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+    
+        # 安全写入 GITHUB_OUTPUT（关键）
+        NOTES="${NOTES//'%'/'%25'}"
+        NOTES="${NOTES//$'\n'/'%0A'}"
+        NOTES="${NOTES//$'\r'/'%0D'}"
+    
+        echo "notes=$NOTES" >> "$GITHUB_OUTPUT"
 
     # -----------------------------
     # 3. 安装 .NET 10
