@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using TreePassBot2.BotEngine.Plugins;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
 using TreePassBot2.PluginSdk.Exceptions;
@@ -7,15 +8,33 @@ using TreePassBot2.PluginSdk.Interfaces;
 
 namespace TreePassBot2.BotEngine.Services;
 
-public partial class PluginManagerService(IServiceProvider services, ILogger<PluginManagerService> logger)
-    : IAsyncDisposable
+public partial class PluginManagerService : IAsyncDisposable
 {
+    private readonly IServiceProvider _services;
+    private readonly ILogger<PluginManagerService> _logger;
     private readonly ConcurrentDictionary<string, PluginSupervisor> _activePlugins = [];
 
     private readonly ConcurrentDictionary<string, (PluginSupervisor Supervisor, IBotCommand Command)>
         _commandRouteTable = [];
 
     public IReadOnlyList<PluginSupervisor> ActivePlugins => _activePlugins.Values.ToList();
+
+    private readonly string _currentRootPath = Directory.GetCurrentDirectory();
+    private readonly string _shadowCachePath;
+
+    public PluginManagerService(IServiceProvider services, ILogger<PluginManagerService> logger)
+    {
+        _services = services;
+        _logger = logger;
+
+        _shadowCachePath = Path.Combine(_currentRootPath, "shadow_cache");
+        if (Directory.Exists(_shadowCachePath))
+        {
+            Directory.Delete(_shadowCachePath, true);
+        }
+
+        Directory.CreateDirectory(_shadowCachePath);
+    }
 
     /// <summary>
     /// Load a plugin from plugin file path.
@@ -24,8 +43,20 @@ public partial class PluginManagerService(IServiceProvider services, ILogger<Plu
     /// <exception cref="FailedToActivatePluginException">Throws if failed to activate a plugin.</exception>
     public async Task<bool> LoadPluginAsync(string dllPath)
     {
-        var alc = new PluginLoadAssemblyContext(dllPath);
-        var assembly = alc.LoadFromAssemblyPath(dllPath);
+        if (!Path.IsPathRooted(dllPath))
+        {
+            dllPath = Path.Combine(_currentRootPath, dllPath);
+        }
+
+        var shadowPath = Path.Combine(
+            _shadowCachePath,
+            $"{Path.GetFileNameWithoutExtension(dllPath)}_{Guid.NewGuid()}.dll"
+        );
+
+        await CopyFileAsync(dllPath, shadowPath).ConfigureAwait(false);
+
+        var alc = new PluginLoadAssemblyContext(shadowPath);
+        var assembly = alc.LoadFromAssemblyPath(shadowPath);
         var pluginType = assembly.GetTypes().FirstOrDefault(t => typeof(IBotPlugin).IsAssignableFrom(t))
                       ?? throw new InvalidOperationException(
                              "Cannot load this dll that not implemnet IBotPlugin interface.");
@@ -35,7 +66,7 @@ public partial class PluginManagerService(IServiceProvider services, ILogger<Plu
             throw new FailedToActivatePluginException($"Fialed to activate plugin: {pluginType}");
         }
 
-        var context = new PluginLoadingLoadingContextImpl(pluginInstance.Meta.Id, services);
+        var context = new PluginLoadingLoadingContextImpl(pluginInstance.Meta.Id, _services);
 
         try
         {
@@ -43,20 +74,38 @@ public partial class PluginManagerService(IServiceProvider services, ILogger<Plu
         }
         catch (Exception ex)
         {
-            LogFialedToLoadPluginId(logger, ex, pluginInstance.Meta.Id);
+            LogFialedToLoadPluginId(_logger, ex, pluginInstance.Meta.Id);
             alc.Unload();
             return false;
         }
 
-        var supervisor = new PluginSupervisor(pluginInstance, alc, logger);
+        var supervisor = new PluginSupervisor(alc, _logger)
+        {
+            Plugin = pluginInstance,
+            ShadowPluginFilePath = shadowPath,
+            RealPluginFilePath = dllPath
+        };
         supervisor.OnPluginException += SupervisorOnOnPluginException;
 
         var pluginId = pluginInstance.Meta.Id;
 
-        // uload if already loaded
+        // unload and delete if already loaded
         if (_activePlugins.TryGetValue(pluginId, out var activePlugin))
         {
-            await activePlugin.UnloadAsync().ConfigureAwait(false);
+            await UnloadPluginAsync(pluginId).ConfigureAwait(false);
+            _activePlugins.Remove(pluginId, out _);
+
+            try
+            {
+                File.Delete(activePlugin.RealPluginFilePath);
+            }
+            catch (Exception ex)
+            {
+                LogFialedToDeleteOldPlugin(_logger, activePlugin.Meta.Id, activePlugin.ShadowPluginFilePath, ex);
+
+                return false;
+            }
+
             _activePlugins.TryRemove(pluginId, out _);
         }
 
@@ -74,21 +123,41 @@ public partial class PluginManagerService(IServiceProvider services, ILogger<Plu
             }
         }
 
-        LogHaveLoadedPluginNameRegisteredCountCommands(logger, pluginInstance.Meta.Name,
-                                                       context.RegisteredCommands.Count);
+        LogHaveLoadedPlugin(_logger, pluginInstance.Meta.Name, context.RegisteredCommands.Count);
 
         return true;
+    }
+
+    private async Task CopyFileAsync(string source, string target)
+    {
+        await using var sourceStream = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        await using var targetStream = new FileStream(target, FileMode.Create);
+        await sourceStream.CopyToAsync(targetStream).ConfigureAwait(false);
     }
 
     private void RegisterRoute(string trigger, IBotCommand cmd, PluginSupervisor supervisor)
     {
         if (_commandRouteTable.ContainsKey(trigger))
         {
-            LogTriggerTriggerIsAlreadyRegisteredByNewplugin(logger, trigger, supervisor.Meta.Id);
+            LogTriggerTriggerIsAlreadyRegistered(_logger, trigger, supervisor.Meta.Id);
             return;
         }
 
         _commandRouteTable[trigger] = (supervisor, cmd);
+    }
+
+    public Task<bool> TryGetPluginIdAsync(string cmdTrigger, [NotNullWhen(true)] out string? id)
+    {
+        id = null;
+
+        if (!_commandRouteTable.TryGetValue(cmdTrigger, out var value))
+        {
+            id = null;
+            return Task.FromResult(false);
+        }
+
+        id = value.Supervisor.Meta.Id;
+        return Task.FromResult(true);
     }
 
     /// <summary>
@@ -96,19 +165,35 @@ public partial class PluginManagerService(IServiceProvider services, ILogger<Plu
     /// </summary>
     /// <param name="cmdTrigger">Matched command.</param>
     /// <param name="cmdCtx">Message context.</param>
-    public async Task DispatchCommandAsync(string cmdTrigger, ICommandContext cmdCtx)
+    public async Task DispatchCommandAsync(string cmdTrigger, ICommandContext cmdCtx, bool ignoreNotFound = false)
     {
-        if (!_commandRouteTable.TryGetValue(cmdTrigger, out var value))
-        {
-            var replyMsg = new MessageBuilder().AddText("Command not found");
+        _logger.LogInformation("Dispatch command: {Trigger}", cmdTrigger);
 
-            await cmdCtx.ReplyAsync(replyMsg).ConfigureAwait(false);
-            return;
+        PluginSupervisor supervisor;
+        IBotCommand command;
+        if (ignoreNotFound)
+        {
+            (supervisor, command) = _commandRouteTable[cmdTrigger];
+        }
+        else
+        {
+            if (!_commandRouteTable.TryGetValue(cmdTrigger, out var value))
+            {
+                var replyMsg = new MessageBuilder()
+                              .AddAt(cmdCtx.SenderId)
+                              .AddText("Command not found");
+
+                await cmdCtx.ReplyAsync(replyMsg).ConfigureAwait(false);
+                return;
+            }
+
+            supervisor = value.Supervisor;
+            command = value.Command;
         }
 
-        await value.Supervisor.SafeExecuteCommandAsync(value.Command, cmdCtx).ConfigureAwait(false);
+        await supervisor.SafeExecuteCommandAsync(command, cmdCtx).ConfigureAwait(false);
 
-        LogIssuedCommandCommandnameFromGroupidByUserid(logger, value.Command.Trigger, cmdCtx.GroupId, cmdCtx.SenderId);
+        LogIssuedCommandCommandnameFromGroupidByUserid(_logger, command.Trigger, cmdCtx.GroupId, cmdCtx.SenderId);
     }
 
     private void SupervisorOnOnPluginException(string pluginId)
@@ -133,7 +218,7 @@ public partial class PluginManagerService(IServiceProvider services, ILogger<Plu
                 _commandRouteTable.TryRemove(key, out _);
             }
 
-            LogUnloadPluginIdSuccessfully(logger, pluginId);
+            LogUnloadPluginIdSuccessfully(_logger, pluginId);
         }
     }
 
@@ -146,6 +231,8 @@ public partial class PluginManagerService(IServiceProvider services, ILogger<Plu
         {
             await activePlugin.Value.UnloadAsync().ConfigureAwait(false);
         }
+
+        _activePlugins.Clear();
     }
 
     #region LogMethod
@@ -154,12 +241,12 @@ public partial class PluginManagerService(IServiceProvider services, ILogger<Plu
     static partial void LogFialedToLoadPluginId(ILogger<PluginManagerService> logger, Exception ex, string id);
 
     [LoggerMessage(LogLevel.Information, "Have loaded plugin: {name}; Registered {count} commands")]
-    static partial void LogHaveLoadedPluginNameRegisteredCountCommands(ILogger<PluginManagerService> logger,
-                                                                       string name, int count);
+    static partial void LogHaveLoadedPlugin(ILogger<PluginManagerService> logger,
+                                            string name, int count);
 
     [LoggerMessage(LogLevel.Warning, "Trigger '{trigger}' is already registered by {newPlugin}")]
-    static partial void LogTriggerTriggerIsAlreadyRegisteredByNewplugin(ILogger<PluginManagerService> logger,
-                                                                        string trigger, string newPlugin);
+    static partial void LogTriggerTriggerIsAlreadyRegistered(ILogger<PluginManagerService> logger,
+                                                             string trigger, string newPlugin);
 
     [LoggerMessage(LogLevel.Trace, "Issued command {commandName} from {groupId} by {userId}")]
     static partial void LogIssuedCommandCommandnameFromGroupidByUserid(ILogger<PluginManagerService> logger,
@@ -169,4 +256,8 @@ public partial class PluginManagerService(IServiceProvider services, ILogger<Plu
     static partial void LogUnloadPluginIdSuccessfully(ILogger<PluginManagerService> logger, string id);
 
     #endregion
+
+    [LoggerMessage(LogLevel.Error, "Fialed to delete old plugin file: {Id}; {Path}")]
+    static partial void LogFialedToDeleteOldPlugin(ILogger<PluginManagerService> logger, string Id,
+                                                   string Path, Exception exception);
 }

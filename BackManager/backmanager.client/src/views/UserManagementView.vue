@@ -339,6 +339,10 @@ const fetchGroupMembers = async (groupId: string) => {
 
 // 处理群组点击
 const handleGroupClick = (data: Group) => {
+  // 清空成员搜索关键词
+  memberSearchKeyword.value = '';
+  memberCurrentPage.value = 1;
+  memberPageSize.value = 20;
   selectedGroup.value = data;
   fetchGroupMembers(data.groupId);
 };

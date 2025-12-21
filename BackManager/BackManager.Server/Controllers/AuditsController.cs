@@ -2,6 +2,7 @@ using BackManager.Server.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Immutable;
+using TreePassBot2.BotEngine.Services;
 using TreePassBot2.Core.Entities.Enums;
 using TreePassBot2.Data;
 
@@ -20,6 +21,7 @@ namespace BackManager.Server.Controllers;
 [Route("api/[controller]")]
 public partial class AuditsController(
     BotDbContext dbContext,
+    AuditManagerService auditManagerService,
     ILogger<AuditsController> logger) : ControllerBase
 {
     /// <summary>
@@ -46,7 +48,7 @@ public partial class AuditsController(
                 EnteredGroup = audit.Status == AuditStatus.Approved,
                 CreatedAt = audit.CreatedAt.ToString("O"),
                 ProcessedAt = audit.ProcessedAt.ToString("O"),
-                audit.ProcessedBy
+                ProcessedBy = audit.ProcessedBy
             }).ToImmutableList();
 
             return Ok(ApiResponse<object>.Ok(auditRecords, "获取审核记录成功"));
@@ -68,21 +70,17 @@ public partial class AuditsController(
     {
         try
         {
-            if (!Guid.TryParse(auditId, out var id))
+            if (!Guid.TryParse(auditId, out var requestId))
             {
                 return BadRequest(ApiResponse<object>.Error("无效的审核ID"));
             }
 
-            var auditRequest = await dbContext.AuditRequests.FindAsync(id).ConfigureAwait(false);
-            if (auditRequest == null)
+            var (isSuccess, result) =
+                await auditManagerService.ApproveAuditRequestAsync(requestId, 0).ConfigureAwait(false);
+            if (!isSuccess)
             {
                 return NotFound(ApiResponse<object>.Error("审核记录不存在"));
             }
-
-            auditRequest.Status = AuditStatus.Approved;
-            auditRequest.ProcessedBy = 0;
-            auditRequest.ProcessedAt = DateTimeOffset.UtcNow;
-            await dbContext.SaveChangesAsync().ConfigureAwait(false);
 
             return Ok(ApiResponse<object>.Ok(null, $"审核 {auditId} 已批准"));
         }
@@ -108,16 +106,11 @@ public partial class AuditsController(
                 return BadRequest(ApiResponse<object>.Error("无效的审核ID"));
             }
 
-            var auditRequest = await dbContext.AuditRequests.FindAsync(id).ConfigureAwait(false);
-            if (auditRequest == null)
+            var (isSuccess, result) = await auditManagerService.DenyAuditRequestAsync(id, 0).ConfigureAwait(false);
+            if (!isSuccess)
             {
                 return NotFound(ApiResponse<object>.Error("审核记录不存在"));
             }
-
-            auditRequest.Status = AuditStatus.Rejected;
-            auditRequest.ProcessedBy = 0;
-            auditRequest.ProcessedAt = DateTimeOffset.UtcNow;
-            await dbContext.SaveChangesAsync().ConfigureAwait(false);
 
             return Ok(ApiResponse<object>.Ok(null, $"审核 {auditId} 已拒绝"));
         }

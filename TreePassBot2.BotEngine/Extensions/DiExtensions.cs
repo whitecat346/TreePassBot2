@@ -23,9 +23,12 @@ public static class DiExtensions
                     .AddSingleton<BotEventRouter>()
                     .AddSingleton<AppRuntimeInfo>()
                     .AddSingleton<UserManageService>()
-                    .AddSingleton<ICommunicationService, MakabakaService>()
-                    .AddScoped<WithdrawMessageFlagger>()
-                    .AddBotEngineMessageHandlers();
+                    .AddSingleton<ICommunicationService, MakabakaService>();
+
+            services.AddScoped<WithdrawMessageFlagger>()
+                    .AddScoped<AuditManagerService>();
+
+            services.AddBotEngineMessageHandlers();
 
             return services;
         }

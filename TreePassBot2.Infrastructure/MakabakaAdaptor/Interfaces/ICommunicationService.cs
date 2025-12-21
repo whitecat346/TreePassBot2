@@ -88,6 +88,22 @@ public interface ICommunicationService
     Task<GroupInfo?> GetGroupInfoAsync(ulong groupId);
 
     /// <summary>
+    /// Announce audit was approved action to target user.
+    /// </summary>
+    Task AnnounceApprovedAuditActionAsync(ulong targetUserId, ulong targetGroupId, string message,
+                                          string verificationCode);
+
+    /// <summary>
+    /// Announce audit was rejected action to target user.
+    /// </summary>
+    Task AnnounceRejectedAuditActionAsync(ulong targetUserId, ulong targetGroupId, string message);
+
+    /// <summary>
+    /// Get group list.
+    /// </summary>
+    Task<List<GroupInfo>?> GetGroupListAsync();
+
+    /// <summary>
     /// Connect to Websocket Server.
     /// </summary>
     Task ConnectAsync();
@@ -96,9 +112,4 @@ public interface ICommunicationService
     /// Disconnect from Websocket Server.
     /// </summary>
     Task DisconnectAsync();
-
-    /// <summary>
-    /// Get group list.
-    /// </summary>
-    Task<List<GroupInfo>?> GetGroupListAsync();
 }

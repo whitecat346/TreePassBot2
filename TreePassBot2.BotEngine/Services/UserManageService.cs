@@ -81,6 +81,13 @@ public class UserManageService(
 
     #region Group
 
+    public async Task<string> GetGroupNameAsync(ulong groupId)
+    {
+        var groups = await GetGroupListFromApiAsync().ConfigureAwait(false);
+        var group = groups.SingleOrDefault(it => it.GroupId == groupId);
+        return group?.Name ?? string.Empty;
+    }
+
     public async Task<List<GroupInfo>> GetGroupListFromApiAsync(bool forceUpdate = false)
     {
         if (_groups.Count > 0 && !forceUpdate)

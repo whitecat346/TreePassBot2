@@ -1,4 +1,4 @@
-using TreePassBot2.Infrastructure.MakabakaAdaptor;
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MetaInfo;
 
 namespace TreePassBot2.BotEngine.Interfaces;
 

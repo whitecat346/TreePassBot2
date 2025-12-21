@@ -198,9 +198,9 @@ export interface MessageLogResponse {
 export const getBotStatus = () => apiClient.get<ApiResponse<BotStatus>>('/bot/status');
 export const startBot = () => apiClient.post<ApiResponse<void>>('/bot/start');
 export const stopBot = () => apiClient.post<ApiResponse<void>>('/bot/stop');
-export const totalMemberCount = () => apiClient.get<ApiResponse<{ count: number }>>('/groups/totalMemberCount');
-export const totalGroupCount = () => apiClient.get<ApiResponse<{ count: number }>>('/groups/totalGroupCount');
-export const enabledPluginCount = () => apiClient.get<ApiResponse<{ count: number }>>('/plugins/enabledCount');
+export const getTotalMemberCount = () => apiClient.get<ApiResponse<number>>('/groups/totalMemberCount');
+export const getTotalGroupCount = () => apiClient.get<ApiResponse<number>>('/groups/totalGroupCount');
+export const getEnabledPluginCount = () => apiClient.get<ApiResponse<number>>('/plugins/enabledCount');
 
 // 服务器状态 API
 export const getServerStatus = () => apiClient.get<ApiResponse<ServerStatus>>('/server/status');

@@ -13,14 +13,14 @@ public class VideoSegment : MessageSegment
     /// <summary>
     /// 视频文件路径
     /// </summary>
-    public string File { get; set; }
+    public string Url { get; set; }
 
     /// <summary>
     /// 初始化视频消息段
     /// </summary>
-    /// <param name="file">视频文件路径</param>
-    public VideoSegment(string file)
+    /// <param name="url">视频文件路径</param>
+    public VideoSegment(string url)
     {
-        File = file;
+        Url = url;
     }
 }

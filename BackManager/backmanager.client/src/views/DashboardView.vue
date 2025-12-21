@@ -23,7 +23,7 @@
                 </el-tag>
               </el-descriptions-item>
               <el-descriptions-item label="启动时间">
-                {{ botStatus.startTime ? new Date(botStatus.startTime).toLocaleString() : 'N/A' }}
+                {{ botStatus.startTime ? botStatus.startTime : 'N/A' }}
               </el-descriptions-item>
               <el-descriptions-item label="版本">
                 {{ botStatus.version || 'N/A' }}
@@ -149,8 +149,11 @@ import {
   startBot,
   stopBot,
   getServerStatus,
+  getTotalGroupCount,
+  getTotalMemberCount,
+  getEnabledPluginCount,
+  type ServerStatus,
   type BotStatus,
-  type ServerStatus
 } from '@/services/api';
 import { ElMessage } from 'element-plus';
 
@@ -158,7 +161,7 @@ import { ElMessage } from 'element-plus';
 const loading = ref(true);
 const botStatus = ref<BotStatus>({
   status: 'Stopped',
-  startTime: null,
+  startTime: 'Unknown',
   version: '1.0.0',
   protocol: 'OneBot 11'
 });
@@ -177,9 +180,9 @@ const timerId = ref<number | null>(null);
 // 机器人配置信息（模拟数据，后续从API获取）
 const botConfig = ref({
   name: 'TreePassBot',
-  groupCount: 5,
-  totalMemberCount: 1200,
-  enabledPlugins: 8,
+  groupCount: 0,
+  totalMemberCount: 0,
+  enabledPlugins: 0,
   server: 'napcat'
 });
 
@@ -205,6 +208,28 @@ const fetchBotStatus = async () => {
   }
 };
 
+const fetchBotConfig = async () => {
+  try {
+      const memberCount = await getTotalMemberCount();
+      const groupCount = await getTotalGroupCount();
+      const enabledPlugins = await getEnabledPluginCount();
+    if (memberCount.data.success && groupCount.data.success && enabledPlugins.data.success) {
+      botConfig.value = {
+        name: 'TreePassBot',
+        groupCount: groupCount.data.data,
+        totalMemberCount: memberCount.data.data,
+        enabledPlugins: enabledPlugins.data.data,
+        server: 'napcat'
+      };
+    } else {
+      // 当API返回success为false时，抛出错误
+      throw new Error('获取群组数或成员数或插件数失败');
+    }
+  } catch {
+    ElMessage.error('获取机器人配置失败');
+  }
+}
+
 // 获取服务器状态
 const fetchServerStatus = async () => {
   try {
@@ -227,6 +252,7 @@ const handleStart = async () => {
     if (response.data.success) {
       ElMessage.success('机器人启动成功');
       fetchBotStatus();
+      fetchBotConfig();
     } else {
       // 当API返回success为false时，抛出错误
       throw new Error(response.data.message || '启动失败');
@@ -243,6 +269,7 @@ const handleStop = async () => {
     if (response.data.success) {
       ElMessage.success('机器人已停止');
       fetchBotStatus();
+      fetchBotConfig();
     } else {
       // 当API返回success为false时，抛出错误
       throw new Error(response.data.message || '停止失败');
@@ -259,7 +286,8 @@ const initData = async () => {
     // 并行请求数据，使用Promise.allSettled确保所有请求完成后再设置loading为false
     await Promise.allSettled([
       fetchBotStatus(),
-      fetchServerStatus()
+      fetchServerStatus(),
+      fetchBotConfig()
     ]);
   } catch (err) {
     console.error('初始化数据失败:', err);
@@ -276,6 +304,7 @@ onMounted(() => {
   timerId.value = window.setInterval(() => {
     fetchBotStatus();
     fetchServerStatus();
+    fetchBotConfig();
   }, 10000);
 });
 

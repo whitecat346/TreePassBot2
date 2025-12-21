@@ -5,6 +5,14 @@ namespace TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments;
 /// </summary>
 public class Message : List<MessageSegment>
 {
+    public Message()
+    {
+    }
+
+    public Message(IEnumerable<MessageSegment> segments) : base(segments)
+    {
+    }
+
     /// <summary>
     /// 将消息转换为字符串表示
     /// </summary>
@@ -12,15 +20,15 @@ public class Message : List<MessageSegment>
     public override string ToString() =>
         string.Join(" ", this.Select(segment => segment switch
         {
-            TextSegment textSegment => $"<text>{textSegment.Text}</text>",
+            TextSegment textSegment => $"{textSegment.Text}",
             AtSegment atSegment => $"@<{atSegment.UserId}>",
-            ForwardSegment forwardSegment => $"<forward>{forwardSegment.ForwardId}</forward>",
-            ReplySegment replySegment => $"<reply>{replySegment.MessageId}<reply/>",
-            ImageSegment imageSegment => $"<image>{imageSegment.File}</image>",
-            VideoSegment videoSegment => $"<video>{videoSegment.File}</video>",
-            AudioSegment audioSegment => $"<audio>{audioSegment.File}</audio>",
-            FaceSegment faceSegment => $"<face>{faceSegment.FaceId}</face>",
-            PokeSegment pokeSegment => $"<poke>{pokeSegment.PokeType}</poke>",
+            ForwardSegment forwardSegment => $"{forwardSegment.ForwardId}",
+            ReplySegment replySegment => $"{replySegment.MessageId}",
+            ImageSegment imageSegment => $"{imageSegment.Url}",
+            VideoSegment videoSegment => $"{videoSegment.Url}",
+            AudioSegment audioSegment => $"{audioSegment.File}",
+            FaceSegment faceSegment => $"{faceSegment.FaceId}",
+            PokeSegment pokeSegment => $"{pokeSegment.PokeType}",
             _ => string.Empty
         }));
 }

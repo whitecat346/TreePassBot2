@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
 using TreePassBot2.PluginSdk.Interfaces;
@@ -12,7 +13,7 @@ public class CommandContextImpl(ICommunicationService communicationService) : IC
     private ICommunicationService CommunicationService { get; } = communicationService;
 
     /// <inheritdoc />
-    public string SenderNickName { get; init; }
+    public string SenderName { get; init; }
 
     /// <inheritdoc />
     public ulong SenderId { get; init; }
@@ -34,6 +35,8 @@ public class CommandContextImpl(ICommunicationService communicationService) : IC
 
     /// <inheritdoc />
     public required IBotApi BotApi { get; init; }
+
+    public required ILogger<ICommandContext> Logger { get; set; }
 
     /// <inheritdoc />
     public Task ReplyAsync(Infrastructure.MakabakaAdaptor.Models.MessageSegments.Message msg)

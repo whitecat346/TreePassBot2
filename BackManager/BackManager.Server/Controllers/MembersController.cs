@@ -31,7 +31,7 @@ public partial class MembersController(
         [FromQuery] int limit,
         [FromQuery] int skip)
     {
-        LogGettingGroupMembersForGroupidGroupidLimitLimitSkipSkip(logger, groupId, limit, skip);
+        LogGettingGroupMembers(logger, groupId, limit, skip);
 
         try
         {
@@ -41,21 +41,24 @@ public partial class MembersController(
 
             var users = fetched.Skip(skip).Take(limit).ToList();
 
-            var members = users.Select((user, index) => new
-            {
-                GroupId = groupId,
-                UserId = user.QqId.ToString(),
-                Username = user.UserName ?? $"用户{user.QqId}",
-                Nickname = user.UserName ?? $"用户{user.QqId}",
-                Role = user.Role.ToString(),
-                JoinedAt = user.JoinedAt.ToString("O")
-            }).ToList();
+            var members = users
+                         .OrderByDescending(m => m.Role)
+                         .Select((user, _) => new
+                         {
+                             GroupId = groupId,
+                             UserId = user.QqId.ToString(),
+                             Username = user.UserName ?? $"用户{user.QqId}",
+                             Nickname = user.UserName ?? $"用户{user.QqId}",
+                             Role = user.Role.ToString(),
+                             JoinedAt = user.JoinedAt.ToString("O")
+                         })
+                         .ToList();
 
             return Ok(ApiResponse<object>.Ok(members, "获取群组成员列表成功"));
         }
         catch (Exception ex)
         {
-            LogFailedToGetGroupMemberListError(logger, ex.Message);
+            LogFailedToGetGroupMembers(logger, ex.Message);
             return StatusCode(500, ApiResponse<object>.Error($"获取群组成员列表失败: {ex.Message}"));
         }
     }
@@ -72,7 +75,7 @@ public partial class MembersController(
         }
         catch (Exception ex)
         {
-            LogFailedToGetGroupMemberCountError(logger, ex.Message);
+            LogFailedToGetGroupMemberCount(logger, ex.Message);
             return StatusCode(500, ApiResponse<object>.Error($"获取群组成员数量失败: {ex.Message}"));
         }
     }
@@ -90,22 +93,22 @@ public partial class MembersController(
                 totalCount += members.Count;
             }
 
-            return Ok(ApiResponse<object>.Ok(new { TotalCount = totalCount }, "获取所有群组成员总数成功"));
+            return Ok(ApiResponse<int>.Ok(totalCount, "获取所有群组成员总数成功"));
         }
         catch (Exception ex)
         {
-            LogFailedToGetGroupMemberCountError(logger, ex.Message);
+            LogFailedToGetGroupMemberCount(logger, ex.Message);
             return StatusCode(500, ApiResponse<object>.Error($"获取所有群组成员总数失败: {ex.Message}"));
         }
     }
 
     [LoggerMessage(LogLevel.Debug, "Getting group members for groupId: {groupId}, limit: {limit}, skip: {skip}")]
-    static partial void LogGettingGroupMembersForGroupidGroupidLimitLimitSkipSkip(
+    static partial void LogGettingGroupMembers(
         ILogger<MembersController> logger, string groupId, int limit, int skip);
 
     [LoggerMessage(LogLevel.Error, "Failed to get group member list: {error}")]
-    static partial void LogFailedToGetGroupMemberListError(ILogger<MembersController> logger, string error);
+    static partial void LogFailedToGetGroupMembers(ILogger<MembersController> logger, string error);
 
     [LoggerMessage(LogLevel.Error, "Failed to get group member count: {error}")]
-    static partial void LogFailedToGetGroupMemberCountError(ILogger<MembersController> logger, string error);
+    static partial void LogFailedToGetGroupMemberCount(ILogger<MembersController> logger, string error);
 }

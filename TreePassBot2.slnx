@@ -3,6 +3,8 @@
     <Build />
   </Project>
   <Project Path="BackManager/BackManager.Server/BackManager.Server.csproj" />
+  <Project Path="Plugins/ArchiveMessage/ArchiveMessage.csproj" Id="167c6b73-a850-48f2-8215-b86594767fae" />
+  <Project Path="Plugins/EchoPlugin/EchoPlugin.csproj" Id="c21ca2c2-135b-4d09-ab52-c68d74282420" />
   <Project Path="TreePassBot2.AppHost/TreePassBot2.AppHost.csproj" Id="d65975f4-8ee9-4074-9704-10c188084ce0" />
   <Project Path="TreePassBot2.BotEngine/TreePassBot2.BotEngine.csproj" />
   <Project Path="TreePassBot2.Core/TreePassBot2.Core.csproj" />

@@ -1,6 +1,7 @@
 using Makabaka;
 using Makabaka.Exceptions;
 using Makabaka.Models;
+using Microsoft.Extensions.Logging;
 using TreePassBot2.Core.Entities.Enums;
 using TreePassBot2.Infrastructure.Exceptions;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Converters;
@@ -17,14 +18,16 @@ namespace TreePassBot2.Infrastructure.Services;
 /// </summary>
 public class MakabakaService : ICommunicationService, IAsyncDisposable
 {
+    private readonly ILogger<MakabakaService> _logger;
     private readonly MakabakaApp _makabakaApp;
     public IBotContext BotContext => _makabakaApp.BotContext;
 
     /// <summary>
     /// 构造函数
     /// </summary>
-    public MakabakaService()
+    public MakabakaService(ILogger<MakabakaService> logger)
     {
+        _logger = logger;
         var makaAppBuilder = new MakabakaAppBuilder();
         var makaApp = makaAppBuilder.Build();
 
@@ -44,6 +47,9 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
     public async Task SendGroupMessageAsync(ulong groupId, Message message)
     {
         ArgumentNullException.ThrowIfNull(message);
+
+        var msg = message.ToString();
+        _logger.LogInformation("Send message: {Message}", msg);
 
         try
         {
@@ -238,6 +244,30 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
     }
 
     /// <inheritdoc />
+    public Task AnnounceApprovedAuditActionAsync(
+        ulong targetUserId, ulong targetGroupId, string message, string verificationCode)
+    {
+        var msg = new MessageBuilder()
+                 .AddAt(targetUserId)
+                 .AddText($" {message}\n")
+                 .AddText($"验证码: {verificationCode}")
+                 .Build();
+
+        return SendGroupMessageAsync(targetGroupId, msg);
+    }
+
+    /// <inheritdoc />
+    public Task AnnounceRejectedAuditActionAsync(ulong targetUserId, ulong targetGroupId, string message)
+    {
+        var msg = new MessageBuilder()
+                 .AddAt(targetUserId)
+                 .AddText($" {message}\n")
+                 .Build();
+
+        return SendGroupMessageAsync(targetGroupId, msg);
+    }
+
+    /// <inheritdoc />
     public Task ConnectAsync()
     {
         return _makabakaApp.StartAsync();
@@ -267,14 +297,14 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
         return res;
     }
 
-    private MemberInfo ConvertToMyMemberInfo(GroupMemberInfo memberInfo) =>
+    private static MemberInfo ConvertToMyMemberInfo(GroupMemberInfo memberInfo) =>
         new(memberInfo.UserId,
             memberInfo.Nickname,
             memberInfo.Nickname,
-            ConverteToMyRole(memberInfo.Role),
+            ConvertToMyRole(memberInfo.Role),
             memberInfo.JoinTime);
 
-    private static UserRole ConverteToMyRole(GroupRoleType roleType) =>
+    private static UserRole ConvertToMyRole(GroupRoleType roleType) =>
         roleType switch
         {
             GroupRoleType.Owner => UserRole.Owner,

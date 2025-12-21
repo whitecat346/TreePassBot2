@@ -1,14 +1,24 @@
 
+using Microsoft.Extensions.Options;
+using TreePassBot2.Core.Options;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MetaInfo;
 using TreePassBot2.PluginSdk.Interfaces;
+using MessageSeg = TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments.Message;
 
 namespace TreePassBot2.BotEngine.Services;
 
-public class BotApiImpl(MessageArchiveService archiveService, ICommunicationService communicationService) : IBotApi
+public class BotApiImplService(
+    MessageArchiveService archiveService,
+    ICommunicationService communicationService,
+    AuditManagerService auditManagerService,
+    IOptions<BotOptions> options) : IBotApi
 {
     public required ulong GroupId { get; init; }
     public required ulong UserId { get; init; }
+
+    /// <inheritdoc />
+    public BotOptions BotConfig { get; } = options.Value;
 
     /// <param name="memberId"></param>
     /// <inheritdoc />
@@ -28,11 +38,27 @@ public class BotApiImpl(MessageArchiveService archiveService, ICommunicationServ
         communicationService.KickMemberAsync(GroupId, memberId, rejectRequest);
 
     /// <inheritdoc />
-    public Task<List<Infrastructure.MakabakaAdaptor.Models.MessageSegments.Message>?>
+    public Task<List<MessageSeg>?>
         GetForwardMessageAsync(string forwardId) =>
         communicationService.GetForwardMessageAsync(forwardId);
 
     /// <inheritdoc />
     public Task ArchiveMessageAsync(long startMessageId, string reason, TimeSpan lookBackTime) =>
         archiveService.ArchiveUserMessageAsync(GroupId, UserId, startMessageId, reason, lookBackTime);
+
+    /// <inheritdoc />
+    public Task ApproveAuditAsync(ulong targetUserId) =>
+        auditManagerService.ApproveAuditRequestAsync(targetUserId, UserId);
+
+    /// <inheritdoc />
+    public Task RejectAuditAsync(ulong targetUserId) =>
+        auditManagerService.DenyAuditRequestAsync(targetUserId, UserId);
+
+    /// <inheritdoc />
+    public Task AddAuditRequestAsync(ulong targetUserId) =>
+        auditManagerService.AddAuditRequestAsync(targetUserId, GroupId);
+
+    /// <inheritdoc />
+    public Task RemoveAuditRequestAsync(ulong targetUserId) =>
+        auditManagerService.RemoveAuditRequestAsync(targetUserId);
 }

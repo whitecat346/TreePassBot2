@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TreePassBot2.BotEngine.Extensions;
 using TreePassBot2.BotEngine.Services;
+using TreePassBot2.Core.Options;
 using TreePassBot2.Data;
 
 namespace BackManager.Server.Extensions;
@@ -36,6 +37,8 @@ public static class ServiceCollectionExtensions
                 connString = fileConnString;
             }
         }
+
+        services.Configure<BotOptions>(configuration.GetSection("BotSettings"));
 
         services.AddDbContextPool<BotDbContext>(options =>
                                                     options.UseNpgsql(connString));

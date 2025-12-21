@@ -2,6 +2,7 @@ using BackManager.Server.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Immutable;
+using TreePassBot2.BotEngine.Services;
 using TreePassBot2.Data;
 
 namespace BackManager.Server.Controllers;
@@ -17,6 +18,7 @@ namespace BackManager.Server.Controllers;
 [Route("api/messages")]
 public partial class MessageLogsController(
     BotDbContext dbContext,
+    UserManageService userManage,
     ILogger<MessageLogsController> logger) : ControllerBase
 {
     /// <summary>
@@ -38,7 +40,7 @@ public partial class MessageLogsController(
     {
         try
         {
-            var query = dbContext.MessageLogs.AsQueryable();
+            var query = dbContext.ArchivedMessageLogs.AsQueryable();
 
             if (!string.IsNullOrEmpty(groupId))
             {
@@ -68,7 +70,7 @@ public partial class MessageLogsController(
             {
                 if (long.TryParse(beforeId, out var beforeIdValue))
                 {
-                    query = query.Where(m => m.Id < beforeIdValue);
+                    query = query.Where(m => m.MessageId < beforeIdValue);
                 }
             }
 
@@ -91,9 +93,9 @@ public partial class MessageLogsController(
                 UserId = m.UserId.ToString(),
                 Username = m.UserName ?? $"用户{m.UserId}",
                 Content = m.Content,
-                SendTime = m.SendAt.ToString("O"),
+                SendAt = m.SendAt.ToString("O"),
                 IsRecalled = m.IsRecalled,
-                RecalledBy = m.RecalledBy?.ToString(),
+                RecalledBy = m.RecalledBy.ToString(),
                 RecalledAt = string.Empty
             }).ToImmutableList();
 
@@ -109,7 +111,7 @@ public partial class MessageLogsController(
         }
         catch (Exception ex)
         {
-            LogFailedToGetMessageLogError(logger, ex.Message);
+            LogFailedToGetMessageLog(logger, ex.Message);
             return StatusCode(500, ApiResponse<object>.Error($"获取消息日志失败: {ex.Message}"));
         }
     }
@@ -129,7 +131,7 @@ public partial class MessageLogsController(
                 return BadRequest(ApiResponse<object>.Error("无效的消息ID"));
             }
 
-            var messageLog = await dbContext.MessageLogs.FindAsync(id).ConfigureAwait(false);
+            var messageLog = await dbContext.ArchivedMessageLogs.FindAsync(id).ConfigureAwait(false);
             if (messageLog == null)
             {
                 return NotFound(ApiResponse<object>.Error("消息不存在"));
@@ -145,7 +147,7 @@ public partial class MessageLogsController(
                 Content = messageLog.Content,
                 SendTime = messageLog.SendAt.ToString("s"),
                 IsRecalled = messageLog.IsRecalled,
-                RecalledBy = messageLog.RecalledBy?.ToString(),
+                RecalledBy = messageLog.RecalledBy.ToString(),
                 RecalledAt = string.Empty
             };
 
@@ -153,14 +155,26 @@ public partial class MessageLogsController(
         }
         catch (Exception ex)
         {
-            LogFailedToGetMessageDatailsError(logger, ex.Message);
+            LogFailedToGetMessageDatails(logger, ex.Message);
             return StatusCode(500, ApiResponse<object>.Error($"获取消息详情失败: {ex.Message}"));
         }
     }
 
+    public async Task<IActionResult> GetArchivedGroups()
+    {
+        var groups = dbContext.ArchivedMessageLogs.Select(msg => msg.GroupId).Distinct();
+        var groupInfo =
+            (await userManage.GetGroupListFromApiAsync().ConfigureAwait(false))
+           .ToDictionary(info => info.GroupId, info => info);
+
+        var result = groups.Select(groupId => groupInfo[groupId]);
+
+        return Ok(ApiResponse<object>.Ok(result, "获取归档群组列表成功"));
+    }
+
     [LoggerMessage(LogLevel.Error, "Failed to get message log: {error}")]
-    static partial void LogFailedToGetMessageLogError(ILogger<MessageLogsController> logger, string error);
+    static partial void LogFailedToGetMessageLog(ILogger<MessageLogsController> logger, string error);
 
     [LoggerMessage(LogLevel.Error, "Failed to get message datails: {error}")]
-    static partial void LogFailedToGetMessageDatailsError(ILogger<MessageLogsController> logger, string error);
+    static partial void LogFailedToGetMessageDatails(ILogger<MessageLogsController> logger, string error);
 }

@@ -8,7 +8,7 @@ public class ImageSegment : MessageSegment
     /// <summary>
     /// 图片文件路径或URL
     /// </summary>
-    public string File { get; set; }
+    public string Url { get; set; }
 
     /// <summary>
     /// 消息段类型
@@ -18,9 +18,9 @@ public class ImageSegment : MessageSegment
     /// <summary>
     /// 构造函数
     /// </summary>
-    /// <param name="file">图片文件路径或URL</param>
-    public ImageSegment(string file)
+    /// <param name="url">图片文件路径或URL</param>
+    public ImageSegment(string url)
     {
-        File = file;
+        Url = url;
     }
 }

@@ -6,7 +6,7 @@ using TreePassBot2.ServiceDefaults;
 var builder = WebApplication.CreateBuilder(args);
 
 // database logging configuration
-builder.ConfigureSmartLogger();
+builder.ConfigureDatabaseLogger();
 
 builder.AddServiceDefaults();
 

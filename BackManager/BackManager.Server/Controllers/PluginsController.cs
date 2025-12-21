@@ -61,7 +61,7 @@ public partial class PluginsController(
         try
         {
             var count = pluginManager.ActivePlugins.Count(p => p.IsAlive);
-            return Task.FromResult<IActionResult>(Ok(ApiResponse<object>.Ok(count, "获取启用的插件数量成功")));
+            return Task.FromResult<IActionResult>(Ok(ApiResponse<int>.Ok(count, "获取启用的插件数量成功")));
         }
         catch (Exception ex)
         {
@@ -121,6 +121,9 @@ public partial class PluginsController(
             }
 
             LogPluginFileUploadedSuccessfullyFilename(logger, pluginFile.FileName);
+
+            _ = Task.Run(() => pluginManager.LoadPluginAsync(filePath));
+
             return Ok(ApiResponse<object>.Ok(
                           new { name = pluginFile.FileName, path = filePath },
                           $"插件 {pluginFile.FileName} 上传成功"));

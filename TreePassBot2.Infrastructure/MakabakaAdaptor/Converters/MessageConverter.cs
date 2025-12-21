@@ -63,10 +63,10 @@ public static class MessageConverter
             AtSegment atSegment => new Makabaka.Messages.AtSegment(atSegment.UserId, atSegment.Text),
             ReplySegment replySegment => new Makabaka.Messages.ReplySegment(replySegment.MessageId),
             FaceSegment faceSegment => new Makabaka.Messages.FaceSegment(faceSegment.FaceId.ToString()),
-            ImageSegment imageSegment => new Makabaka.Messages.ImageSegment(imageSegment.File),
+            ImageSegment imageSegment => new Makabaka.Messages.ImageSegment(imageSegment.Url),
             PokeSegment pokeSegment => new Makabaka.Messages.PokeSegment(pokeSegment.PokeType, pokeSegment.PokeId),
             ForwardSegment forwardSegment => new Makabaka.Messages.ForwardSegment(forwardSegment.ForwardId),
-            VideoSegment videoSegment => new Makabaka.Messages.VideoSegment(videoSegment.File),
+            VideoSegment videoSegment => new Makabaka.Messages.VideoSegment(videoSegment.Url),
             _ => null
         };
 
@@ -93,13 +93,14 @@ public static class MessageConverter
                 return long.TryParse(replySegment.Data.Id, out var messageId)
                     ? new ReplySegment(messageId)
                     : null;
+
+            case Makabaka.Messages.ImageSegment imageSegment:
+                return new ImageSegment(imageSegment.Data.Url ?? imageSegment.Data.File);
+
             case Makabaka.Messages.FaceSegment faceSegment:
                 return int.TryParse(faceSegment.Data.Id, out var faceId)
                     ? new FaceSegment(faceId)
                     : null;
-
-            case Makabaka.Messages.ImageSegment imageSegment:
-                return new ImageSegment(imageSegment.Data.File);
 
             case Makabaka.Messages.PokeSegment pokeSegment:
                 return new PokeSegment(0, pokeSegment.Data.Type, pokeSegment.Data.Id);
@@ -108,7 +109,7 @@ public static class MessageConverter
                 return new ForwardSegment(forwardSegment.Data.Id);
 
             case Makabaka.Messages.VideoSegment videoSegment:
-                return new VideoSegment(videoSegment.Data.File);
+                return new VideoSegment(videoSegment.Data.Url);
 
             default:
                 return null;

@@ -11,12 +11,12 @@ namespace TreePassBot2.BotEngine.Services;
 
 public class PluginStateStorageImpl(
     string pluginId,
-    IServiceScopeFactory scopeFactory) : IPluginStateStorage
+    IServiceProvider scopeFactory) : IPluginStateStorage
 {
     /// <inheritdoc />
     public async Task<T?> GetAsync<T>(string key, StorageScope scope, ulong? groupId = null, ulong? userId = null)
     {
-        using var serviceScope = scopeFactory.CreateScope();
+        await using var serviceScope = scopeFactory.CreateAsyncScope();
         var db = serviceScope.ServiceProvider.GetRequiredService<BotDbContext>();
 
         var entityScope = MapToEntityScope(scope);

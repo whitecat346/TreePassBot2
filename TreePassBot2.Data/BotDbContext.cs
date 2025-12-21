@@ -31,6 +31,9 @@ public class BotDbContext(DbContextOptions<BotDbContext> options) : DbContext(op
         modelBuilder.Entity<AuditRequestData>()
                     .HasIndex(audit => audit.VerificationCode);
         modelBuilder.Entity<AuditRequestData>()
+                    .HasIndex(audit => audit.Id)
+                    .IsUnique();
+        modelBuilder.Entity<AuditRequestData>()
                     .HasIndex(audit => new
                     {
                         RequestQqId = audit.UserId,
@@ -47,7 +50,7 @@ public class BotDbContext(DbContextOptions<BotDbContext> options) : DbContext(op
                     .HasIndex(msg => new
                     {
                         msg.GroupId,
-                        msg.UserId,
+                        msg.MessageId,
                         msg.SendAt
                     });
         modelBuilder.Entity<MessageLog>()
@@ -56,9 +59,11 @@ public class BotDbContext(DbContextOptions<BotDbContext> options) : DbContext(op
 
         // archive message logs
         modelBuilder.Entity<ArchivedMessageLog>()
+                    .HasIndex(msg => new { msg.GroupId, msg.SendAt, msg.MessageId });
+        modelBuilder.Entity<ArchivedMessageLog>()
                     .HasIndex(msg => new { msg.GroupId, msg.UserId });
         modelBuilder.Entity<ArchivedMessageLog>()
-                    .HasIndex(msg => msg.UserNickName);
+                    .HasIndex(msg => msg.MessageId);
         //.HasFilter("\"UserNickName\" IS NOT NULL");
 
         // plugin states

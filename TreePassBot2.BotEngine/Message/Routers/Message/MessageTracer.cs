@@ -2,8 +2,8 @@ using Microsoft.Extensions.Logging;
 using TreePassBot2.BotEngine.Interfaces;
 using TreePassBot2.Core.Entities;
 using TreePassBot2.Data;
-using TreePassBot2.Infrastructure.MakabakaAdaptor;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MetaInfo;
 
 namespace TreePassBot2.BotEngine.Message.Routers.Message;
 

@@ -6,15 +6,17 @@ using TreePassBot2.PluginSdk.Interfaces;
 namespace TreePassBot2.BotEngine.Services;
 
 public class PluginSupervisor(
-    IBotPlugin plugin,
     PluginLoadAssemblyContext loadAssemblyCtx,
-    ILogger logger)
+    ILogger logger) : IDisposable
 {
     private int _errorCount;
     private const int MaxErrors = 5;
-    private const int ErrorWindowSeconds = 60;
+    //private const int ErrorWindowSeconds = 60; not in use yet
 
-    public PluginMeta Meta => plugin.Meta;
+    public required IBotPlugin Plugin;
+    public PluginMeta Meta => Plugin.Meta;
+    public required string ShadowPluginFilePath;
+    public required string RealPluginFilePath;
     public bool IsAlive { get; private set; } = true;
 
     /// <summary>
@@ -67,7 +69,7 @@ public class PluginSupervisor(
     {
         try
         {
-            await plugin.OnUnloadedAsync().ConfigureAwait(false);
+            await Plugin.OnUnloadedAsync().ConfigureAwait(false);
         }
         catch
         {
@@ -77,5 +79,12 @@ public class PluginSupervisor(
         {
             loadAssemblyCtx.Unload();
         }
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        var tk = UnloadAsync();
+        Task.WhenAll(tk);
     }
 }

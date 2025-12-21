@@ -36,9 +36,9 @@ public partial class MessageArchiveService(
             MessageId = log.MessageId,
             GroupId = log.GroupId,
             UserId = log.UserId,
-            UserNickName = log.UserName,
-            ContentText = log.Content,
-            IsWithdrawed = log.IsRecalled,
+            UserName = log.UserName,
+            Content = log.Content,
+            IsRecalled = log.IsRecalled,
             SendAt = log.SendAt,
             ArchiveReason = reason,
             OperatorId = operatorId,
@@ -49,12 +49,11 @@ public partial class MessageArchiveService(
 
         await db.SaveChangesAsync().ConfigureAwait(false);
 
-        LogArchivedCountMessagesBeforeMessageidInGroupGroupReasonReason(logger, recentLogs.Count, startMessageId,
-                                                                        groupId, reason);
+        LogArchiveAction(logger, recentLogs.Count, startMessageId, groupId, reason);
     }
 
     [LoggerMessage(LogLevel.Information,
                    "Archived {count} messages before {messageId} in group {group}.\t\n Reason: {reason}")]
-    static partial void LogArchivedCountMessagesBeforeMessageidInGroupGroupReasonReason(
+    static partial void LogArchiveAction(
         ILogger<MessageArchiveService> logger, int count, long messageId, ulong group, string reason);
 }

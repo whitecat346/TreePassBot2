@@ -9,9 +9,9 @@ using TreePassBot2.BotEngine.Services;
 using TreePassBot2.Core.Entities.Enums;
 using TreePassBot2.Core.Options;
 using TreePassBot2.Data;
-using TreePassBot2.Infrastructure.MakabakaAdaptor;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Converters;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
+using TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MetaInfo;
 
 namespace TreePassBot2.BotEngine.Message;
 
@@ -77,7 +77,7 @@ public partial class BotEventRouter
 
         if (latestMessageId == 0)
         {
-            LogFialedToGetLatestMessageLogId();
+            LogFialedToGetLatestMessageLog();
             return;
         }
 
@@ -88,11 +88,31 @@ public partial class BotEventRouter
             $"Muted for {e.Duration}s", TimeSpan.FromHours(2)).ConfigureAwait(false);
     }
 
-    private Task BotContextOnOnGroupAddRequestAsync(object _, GroupAddRequestEventArgs e)
+    private async Task BotContextOnOnGroupAddRequestAsync(object _, GroupAddRequestEventArgs e)
     {
-        // TODO：impl this
+        if (e.GroupId == _config.AuditGroupId)
+        {
+            return;
+        }
 
-        return Task.CompletedTask;
+        await using var scope = _serviceProvider.CreateAsyncScope();
+        var auditManager = scope.ServiceProvider.GetRequiredService<AuditManagerService>();
+
+        var verificationCode = e.Comment.Trim([' ', '\n']);
+        var (isAllowed, msg) =
+            await auditManager.CheckVerificationCodeAsync(e.UserId, verificationCode).ConfigureAwait(false);
+
+        if (isAllowed)
+        {
+            await e.AcceptAsync().ConfigureAwait(false);
+            await auditManager.MarkJoinedAsync(e.UserId).ConfigureAwait(false);
+        }
+        else
+        {
+            await e.RejectAsync(msg).ConfigureAwait(false);
+        }
+
+        LogProcessedUserJoinRequest(e.UserId, verificationCode);
     }
 
     private async Task BotContextOnOnGroupMemberDecreaseAsync(object _, GroupMemberDecreaseEventArgs e)
@@ -115,7 +135,7 @@ public partial class BotEventRouter
 
         if (latestMessageId == 0)
         {
-            LogFialedToGetLatestMessageLogId();
+            LogFialedToGetLatestMessageLog();
             return;
         }
 
@@ -128,16 +148,17 @@ public partial class BotEventRouter
             reason, TimeSpan.FromHours(2)).ConfigureAwait(false);
     }
 
-    private Task BotContextOnOnGroupMemberIncreaseAsync(object _, GroupMemberIncreaseEventArgs e)
+    private async Task BotContextOnOnGroupMemberIncreaseAsync(object _, GroupMemberIncreaseEventArgs e)
     {
         if (e.GroupId != _config.AuditGroupId)
         {
-            return Task.CompletedTask;
+            return;
         }
 
-        // TODO: impl this
+        await using var scope = _serviceProvider.CreateAsyncScope();
+        var auditManager = scope.ServiceProvider.GetRequiredService<AuditManagerService>();
 
-        return Task.CompletedTask;
+        await auditManager.AddAuditRequestAsync(e.UserId, e.GroupId).ConfigureAwait(false);
     }
 
     private Task BotContextOnOnGroupMessageAsync(object _, GroupMessageEventArgs e)
@@ -170,8 +191,11 @@ public partial class BotEventRouter
     }
 
     [LoggerMessage(LogLevel.Error, "Fialed to get latest message log id")]
-    partial void LogFialedToGetLatestMessageLogId();
+    partial void LogFialedToGetLatestMessageLog();
 
     [LoggerMessage(LogLevel.Information, "Handle message: {msgId}")]
     partial void LogHandleMessageMsgid(long msgId);
+
+    [LoggerMessage(LogLevel.Information, "Processed user {userId} with {comment}")]
+    partial void LogProcessedUserJoinRequest(ulong userId, string comment);
 }
