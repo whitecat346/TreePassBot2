@@ -1,0 +1,101 @@
+name: Release Build
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [release]
+
+permissions:
+  contents: write   # 创建 release 必须
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0   # 必须，否则拿不到历史 commit
+
+    # -----------------------------
+    # 1. 计算版本号
+    # -----------------------------
+    - name: Set version
+      id: version
+      run: |
+        SHORT_SHA=$(git rev-parse --short HEAD)
+        VERSION=1.0.${{ github.run_number }}+${SHORT_SHA}
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+    # -----------------------------
+    # 2. 生成 Release Note（commit 列表）
+    # -----------------------------
+    - name: Generate release notes
+      id: notes
+      run: |
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        echo "Last tag: $LAST_TAG"
+
+        if [ -z "$LAST_TAG" ]; then
+          git log --pretty=format:"- %h %s" > release_notes.txt
+        else
+          git log $LAST_TAG..HEAD --pretty=format:"- %h %s" > release_notes.txt
+        fi
+
+        echo "notes<<EOF" >> $GITHUB_OUTPUT
+        cat release_notes.txt >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    # -----------------------------
+    # 3. 安装 .NET 10
+    # -----------------------------
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    # -----------------------------
+    # 4. 发布（非容器化 ZIP）
+    # -----------------------------
+    - name: Publish (zip)
+      run: |
+        dotnet publish \
+          -c Release \
+          -r linux-x64 \
+          --self-contained false \
+          -p:Version=${{ env.VERSION }} \
+          -p:AssemblyVersion=${{ env.VERSION }} \
+          -p:FileVersion=${{ env.VERSION }} \
+          -p:InformationalVersion=${{ env.VERSION }} \
+          -o publish
+
+        cd publish
+        zip -r ../app-${{ env.VERSION }}.zip .
+
+    # -----------------------------
+    # 5. 构建 Docker 镜像（可选）
+    # -----------------------------
+    - name: Build Docker image
+      run: |
+        docker build \
+          -t myapp:${{ env.VERSION }} \
+          -t myapp:latest \
+          .
+
+    # -----------------------------
+    # 6. 创建 GitHub Release
+    # -----------------------------
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ steps.version.outputs.version }}
+        name: v${{ steps.version.outputs.version }}
+        body: |
+          ## Changes
+          ${{ steps.notes.outputs.notes }}
+        files: |
+          app-${{ env.VERSION }}.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
