@@ -1,9 +1,9 @@
 name: Release Build
 
 on:
-  pull_request:
-    types: [closed]
-    branches: [release]
+  push:
+    branches:
+      - release
 
 permissions:
   contents: write   # 创建 release 必须
