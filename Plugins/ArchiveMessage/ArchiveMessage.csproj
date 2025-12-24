@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\TreePassBot2.Core\TreePassBot2.Core.csproj" />
+    <ProjectReference Include="..\..\TreePassBot2.PluginSdk\TreePassBot2.PluginSdk.csproj" />
+  </ItemGroup>
+
 </Project>

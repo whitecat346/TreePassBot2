@@ -12,6 +12,7 @@ public interface ICommandContext
 
     long MessageId { get; }
     Message RawMessage { get; }
+    long ReferMessage { get; }
     string[] Args { get; }
     IPluginStateStorage State { get; }
     IBotApi BotApi { get; }

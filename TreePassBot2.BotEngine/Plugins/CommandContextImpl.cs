@@ -28,6 +28,9 @@ public class CommandContextImpl(ICommunicationService communicationService) : IC
     public Infrastructure.MakabakaAdaptor.Models.MessageSegments.Message RawMessage { get; init; }
 
     /// <inheritdoc />
+    public long ReferMessage { get; init; }
+
+    /// <inheritdoc />
     public required string[] Args { get; init; }
 
     /// <inheritdoc />
@@ -36,7 +39,7 @@ public class CommandContextImpl(ICommunicationService communicationService) : IC
     /// <inheritdoc />
     public required IBotApi BotApi { get; init; }
 
-    public required ILogger<ICommandContext> Logger { get; set; }
+    public required ILogger<ICommandContext> Logger { get; init; }
 
     /// <inheritdoc />
     public Task ReplyAsync(Infrastructure.MakabakaAdaptor.Models.MessageSegments.Message msg)

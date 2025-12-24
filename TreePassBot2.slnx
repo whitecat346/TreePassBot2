@@ -1,15 +1,21 @@
 <Solution>
-  <Project Path="BackManager/backmanager.client/backmanager.client.esproj">
-    <Build />
-  </Project>
-  <Project Path="BackManager/BackManager.Server/BackManager.Server.csproj" />
-  <Project Path="Plugins/ArchiveMessage/ArchiveMessage.csproj" Id="167c6b73-a850-48f2-8215-b86594767fae" />
-  <Project Path="Plugins/EchoPlugin/EchoPlugin.csproj" Id="c21ca2c2-135b-4d09-ab52-c68d74282420" />
-  <Project Path="TreePassBot2.AppHost/TreePassBot2.AppHost.csproj" Id="d65975f4-8ee9-4074-9704-10c188084ce0" />
-  <Project Path="TreePassBot2.BotEngine/TreePassBot2.BotEngine.csproj" />
-  <Project Path="TreePassBot2.Core/TreePassBot2.Core.csproj" />
-  <Project Path="TreePassBot2.Data/TreePassBot2.Data.csproj" />
-  <Project Path="TreePassBot2.Infrastructure/TreePassBot2.Infrastructure.csproj" />
-  <Project Path="TreePassBot2.PluginSdk/TreePassBot2.PluginSdk.csproj" />
-  <Project Path="TreePassBot2.ServiceDefaults/TreePassBot2.ServiceDefaults.csproj" />
+  <Folder Name="/Backend/">
+    <Project Path="TreePassBot2.BotEngine/TreePassBot2.BotEngine.csproj" />
+    <Project Path="TreePassBot2.Core/TreePassBot2.Core.csproj" />
+    <Project Path="TreePassBot2.Data/TreePassBot2.Data.csproj" />
+    <Project Path="TreePassBot2.Infrastructure/TreePassBot2.Infrastructure.csproj" />
+    <Project Path="TreePassBot2.PluginSdk/TreePassBot2.PluginSdk.csproj" />
+  </Folder>
+  <Folder Name="/Frontend/">
+    <Project Path="BackManager/backmanager.client/backmanager.client.esproj">
+      <Build />
+    </Project>
+    <Project Path="BackManager/BackManager.Server/BackManager.Server.csproj" />
+    <Project Path="TreePassBot2.AppHost/TreePassBot2.AppHost.csproj" Id="d65975f4-8ee9-4074-9704-10c188084ce0" />
+    <Project Path="TreePassBot2.ServiceDefaults/TreePassBot2.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/Plugins/">
+    <Project Path="Plugins/ArchiveMessage/ArchiveMessage.csproj" Id="167c6b73-a850-48f2-8215-b86594767fae" />
+    <Project Path="Plugins/EchoPlugin/EchoPlugin.csproj" Id="c21ca2c2-135b-4d09-ab52-c68d74282420" />
+  </Folder>
 </Solution>
