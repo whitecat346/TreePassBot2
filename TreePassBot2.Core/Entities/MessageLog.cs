@@ -10,7 +10,7 @@ public record MessageLog
     public long MessageId { get; set; }
 
     public ulong GroupId { get; set; }
-    public string GroupName { get; set; } = string.Empty;
+    public virtual GroupInfo Group { get; set; } = null!;
     public ulong UserId { get; set; }
     public string? UserName { get; set; }
     public string Content { get; set; } = string.Empty;

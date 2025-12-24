@@ -13,58 +13,74 @@ public class BotDbContext(DbContextOptions<BotDbContext> options) : DbContext(op
     public DbSet<ArchivedMessageLog> ArchivedMessageLogs { get; set; }
 
     /// <inheritdoc />
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        configurationBuilder.Properties<ulong>()
+                            .HaveConversion<long>();
+        configurationBuilder.Properties<ulong?>()
+                            .HaveConversion<long?>();
+    }
+
+    /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         // groups
+        modelBuilder.Entity<GroupInfo>(entity =>
+        {
+            entity.HasKey(g => g.GroupId);
+            entity.Property(g => g.Name).HasMaxLength(200);
+        });
         modelBuilder.Entity<GroupInfo>()
-                    .HasIndex(group => group.GroupId)
-                    .IsUnique();
+                    .ToTable(t => t.HasCheckConstraint("CK_Group_Id_Positive", "\"GroupId\" > 0"));
 
         // users
-        modelBuilder.Entity<QqUserInfo>()
-                    .HasIndex(user => user.QqId)
-                    .IsUnique();
+        modelBuilder.Entity<QqUserInfo>(entity =>
+        {
+            entity.HasIndex(user => new { user.QqId, user.GroupId }).IsUnique();
+
+            entity.HasOne(user => user.Group)
+                  .WithMany(group => group.Members)
+                  .HasForeignKey(user => user.GroupId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
 
         // audits
-        modelBuilder.Entity<AuditRequestData>()
-                    .HasIndex(audit => audit.VerificationCode);
-        modelBuilder.Entity<AuditRequestData>()
-                    .HasIndex(audit => audit.Id)
-                    .IsUnique();
-        modelBuilder.Entity<AuditRequestData>()
-                    .HasIndex(audit => new
-                    {
-                        RequestQqId = audit.UserId,
-                        audit.Status
-                    });
+        modelBuilder.Entity<AuditRequestData>(entity =>
+        {
+            entity.HasOne(a => a.Group)
+                  .WithMany(g => g.AuditRequests)
+                  .HasForeignKey(a => a.GroupId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
 
         // message logs
         modelBuilder.Entity<MessageLog>()
-                    .HasIndex(msg => msg.SendAt);
-        modelBuilder.Entity<MessageLog>()
-                    .HasIndex(msg => msg.MessageId)
-                    .IsUnique();
-        modelBuilder.Entity<MessageLog>()
-                    .HasIndex(msg => new
-                    {
-                        msg.GroupId,
-                        msg.MessageId,
-                        msg.SendAt
-                    });
-        modelBuilder.Entity<MessageLog>()
-                    .HasIndex(msg => msg.UserName);
-        //.HasFilter("\"UserName\" IS NOT NULL");
+                    .HasIndex(msg => msg.SendAt)
+                    .HasMethod("brin");
+        modelBuilder.Entity<MessageLog>(entity =>
+        {
+            entity.HasOne(m => m.Group)
+                  .WithMany(g => g.Messages)
+                  .HasForeignKey(m => m.GroupId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(m => m.MessageId).IsUnique();
+            entity.HasIndex(m => new { m.GroupId, m.SendAt });
+        });
 
         // archive message logs
         modelBuilder.Entity<ArchivedMessageLog>()
-                    .HasIndex(msg => new { msg.GroupId, msg.SendAt, msg.MessageId });
+                    .HasIndex(msg => msg.SendAt)
+                    .HasMethod("brin");
         modelBuilder.Entity<ArchivedMessageLog>()
-                    .HasIndex(msg => new { msg.GroupId, msg.UserId });
+                    .HasIndex(msg => new { msg.GroupId, msg.MessageId })
+                    .IncludeProperties(msg => new { msg.UserId, msg.SendAt });
         modelBuilder.Entity<ArchivedMessageLog>()
-                    .HasIndex(msg => msg.MessageId);
-        //.HasFilter("\"UserNickName\" IS NOT NULL");
+                    .HasIndex(msg => msg.Content)
+                    .HasMethod("gin")
+                    .HasOperators("gin_trgm_ops");
 
         // plugin states
         modelBuilder.Entity<PluginState>()
@@ -75,5 +91,8 @@ public class BotDbContext(DbContextOptions<BotDbContext> options) : DbContext(op
                         plg.GroupId,
                         plg.UserId
                     });
+        modelBuilder.Entity<PluginState>()
+                    .HasIndex(p => p.StateDataJson)
+                    .HasMethod("gin");
     }
 }

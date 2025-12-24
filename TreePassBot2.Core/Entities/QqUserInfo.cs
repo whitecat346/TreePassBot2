@@ -8,16 +8,20 @@ namespace TreePassBot2.Core.Entities;
 /// </summary>
 public record QqUserInfo
 {
+    [Key]
+    public long InternalId { get; set; }
+
     /// <summary>
     /// User qq id.
     /// </summary>
-    [Key]
     public ulong QqId { get; set; }
 
     /// <summary>
     /// Group id that the user belongs to.
     /// </summary>
     public ulong GroupId { get; set; }
+
+    public virtual GroupInfo Group { get; set; } = null!;
 
     /// <summary>
     /// User name displaied in QQ or MessageTracker.

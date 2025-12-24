@@ -10,4 +10,8 @@ public record GroupInfo
     public ulong OwnerId { get; set; }
     public required string Name { get; set; }
     public int MemberCount { get; set; }
+
+    public virtual ICollection<QqUserInfo> Members { get; set; } = [];
+    public virtual ICollection<MessageLog> Messages { get; set; } = [];
+    public virtual ICollection<AuditRequestData> AuditRequests { get; set; } = [];
 }

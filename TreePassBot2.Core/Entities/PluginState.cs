@@ -10,8 +10,8 @@ public record PluginState
     public required string PluginId { get; set; }
 
     public ScopeType Scope { get; set; }
-    public ulong? GroupId { get; set; }
-    public ulong? UserId { get; set; }
+    public ulong GroupId { get; set; } = 0;
+    public ulong UserId { get; set; } = 0;
 
     [Column(TypeName = "jsonb")]
     public string StateDataJson { get; set; } = "{}";

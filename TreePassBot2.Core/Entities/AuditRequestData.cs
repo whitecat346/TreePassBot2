@@ -8,7 +8,7 @@ public record AuditRequestData
     public Guid Id { get; set; } = Guid.NewGuid();
     public required ulong UserId { get; set; }
     public required ulong GroupId { get; set; }
-    public required string GroupName { get; set; } = string.Empty;
+    public virtual GroupInfo Group { get; set; } = null!;
 
     [MaxLength(10)]
     public string VerificationCode { get; set; } = string.Empty;
