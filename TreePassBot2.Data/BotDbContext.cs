@@ -56,9 +56,6 @@ public class BotDbContext(DbContextOptions<BotDbContext> options) : DbContext(op
         });
 
         // message logs
-        modelBuilder.Entity<MessageLog>()
-                    .HasIndex(msg => msg.SendAt)
-                    .HasMethod("brin");
         modelBuilder.Entity<MessageLog>(entity =>
         {
             entity.HasOne(m => m.Group)
@@ -66,7 +63,8 @@ public class BotDbContext(DbContextOptions<BotDbContext> options) : DbContext(op
                   .HasForeignKey(m => m.GroupId)
                   .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasIndex(m => m.MessageId).IsUnique();
+            entity.HasIndex(m => m.SendAt).HasMethod("brin");
+            entity.HasIndex(m => new { m.GroupId, m.MessageId });
             entity.HasIndex(m => new { m.GroupId, m.SendAt });
         });
 

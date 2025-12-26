@@ -18,6 +18,6 @@ public record ArchivedMessageLog
     public ulong RecalledBy { get; set; }
     public string ArchiveReason { get; set; } = string.Empty;
 
-    public ulong? OperatorId { get; set; }
+    public ulong OperatorId { get; set; } = 0;
     public DateTimeOffset ArchivedAt { get; set; } = DateTimeOffset.UtcNow;
 }

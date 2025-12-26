@@ -69,8 +69,8 @@ public class PluginStateStorageImpl(
             {
                 PluginId = pluginId,
                 Scope = eneityScope,
-                GroupId = groupId,
-                UserId = userId,
+                GroupId = groupId ?? 0,
+                UserId = userId ?? 0,
                 StateDataJson = "{}"
             };
             db.PluginStates.Add(entity);

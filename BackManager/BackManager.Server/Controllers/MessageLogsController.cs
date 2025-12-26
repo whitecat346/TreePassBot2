@@ -5,6 +5,8 @@ using System.Collections.Immutable;
 using TreePassBot2.BotEngine.Services;
 using TreePassBot2.Data;
 
+// ReSharper disable RedundantAnonymousTypePropertyName
+
 namespace BackManager.Server.Controllers;
 
 /// <summary>
@@ -91,7 +93,7 @@ public partial class MessageLogsController(
                 GroupId = m.GroupId,
                 GroupName = m.GroupId,
                 UserId = m.UserId.ToString(),
-                Username = m.UserName ?? $"用户{m.UserId}",
+                Username = m.UserNameSnapshot,
                 Content = m.Content,
                 SendAt = m.SendAt.ToString("O"),
                 IsRecalled = m.IsRecalled,
@@ -143,7 +145,7 @@ public partial class MessageLogsController(
                 GroupId = messageLog.GroupId.ToString(),
                 GroupName = $"群组{messageLog.GroupId}",
                 UserId = messageLog.UserId.ToString(),
-                Username = messageLog.UserName ?? $"用户{messageLog.UserId}",
+                Username = messageLog.UserNameSnapshot,
                 Content = messageLog.Content,
                 SendTime = messageLog.SendAt.ToString("s"),
                 IsRecalled = messageLog.IsRecalled,
@@ -164,7 +166,7 @@ public partial class MessageLogsController(
     {
         var groups = dbContext.ArchivedMessageLogs.Select(msg => msg.GroupId).Distinct();
         var groupInfo =
-            (await userManage.GetGroupListFromApiAsync().ConfigureAwait(false))
+            (await userManage.GetGroupListAsync().ConfigureAwait(false))
            .ToDictionary(info => info.GroupId, info => info);
 
         var result = groups.Select(groupId => groupInfo[groupId]);

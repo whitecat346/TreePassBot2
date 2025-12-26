@@ -28,7 +28,7 @@ public partial class GroupsController(
     {
         try
         {
-            var groups = await userManage.GetGroupListFromApiAsync().ConfigureAwait(false);
+            var groups = await userManage.GetGroupListAsync().ConfigureAwait(false);
 
             return Ok(ApiResponse<object>.Ok(groups, "获取群组列表成功"));
         }
@@ -44,7 +44,7 @@ public partial class GroupsController(
     {
         try
         {
-            var groups = await userManage.GetGroupListFromApiAsync().ConfigureAwait(false);
+            var groups = await userManage.GetGroupListAsync().ConfigureAwait(false);
             var totalCount = groups.Count;
             return Ok(ApiResponse<int>.Ok(totalCount, "获取群组总数成功"));
         }

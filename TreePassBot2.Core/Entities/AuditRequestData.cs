@@ -18,7 +18,7 @@ public record AuditRequestData
     public bool IsJoinedGroup { get; set; } = false;
     public string? RejectReason { get; set; }
 
-    public ulong ProcessedBy { get; set; }
+    public ulong ProcessedBy { get; set; } = 0;
     public DateTimeOffset ProcessedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;

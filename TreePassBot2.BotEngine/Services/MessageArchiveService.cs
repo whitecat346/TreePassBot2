@@ -10,46 +10,75 @@ public partial class MessageArchiveService(
     IServiceProvider serviceProvider,
     ILogger<MessageArchiveService> logger)
 {
-    public async Task ArchiveUserMessageAsync(ulong groupId, ulong operatorId, long startMessageId, string reason,
-                                              TimeSpan lookBackTime)
+    public async Task LogMessageAsync(ulong groupId, ulong userId, long messageId, string content)
+    {
+        await using var scope = serviceProvider.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
+
+        var msgLog = new MessageLog
+        {
+            MessageId = messageId,
+            GroupId = groupId,
+            UserId = userId,
+            Content = content,
+            SendAt = DateTimeOffset.UtcNow,
+            IsRecalled = false,
+            RecalledBy = 0
+        };
+
+        db.MessageLogs.Add(msgLog);
+        await db.SaveChangesAsync().ConfigureAwait(false);
+    }
+
+    public async Task ArchiveUserMessageAsync(ulong groupId,
+                                              ulong operatorId,
+                                              long startMessageId,
+                                              string reason,
+                                              TimeSpan? lookBackTime = null)
     {
         await using var scope = serviceProvider.CreateAsyncScope();
 
         var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
 
-        var since = DateTimeOffset.UtcNow - lookBackTime;
+        var anchorMsg = await db.MessageLogs
+                                .Include(m => m.Group)
+                                .FirstOrDefaultAsync(m => m.GroupId == groupId &&
+                                                          m.MessageId == startMessageId)
+                                .ConfigureAwait(false);
 
-        var recentLogs = await db.MessageLogs
-                                 .AsNoTracking()
-                                 .Where(msg => msg.GroupId == groupId &&
-                                               msg.MessageId <= startMessageId &&
-                                               msg.SendAt >= since)
-                                 .ToListAsync().ConfigureAwait(false);
-
-        if (recentLogs.Count == 0)
+        if (anchorMsg == null)
         {
             return;
         }
 
-        var archives = recentLogs.Select(log => new ArchivedMessageLog
+        lookBackTime ??= TimeSpan.FromHours(1);
+
+        var startTime = anchorMsg.SendAt - lookBackTime;
+        var messagesToArchive = await db.MessageLogs
+                                        .AsNoTracking()
+                                        .Where(m => m.SendAt >= startTime
+                                                 && m.SendAt <= anchorMsg.SendAt)
+                                        .ToListAsync().ConfigureAwait(false);
+
+        var archives = messagesToArchive.Select(m => new ArchivedMessageLog
         {
-            MessageId = log.MessageId,
-            GroupId = log.GroupId,
-            UserId = log.UserId,
-            UserName = log.UserName,
-            Content = log.Content,
-            IsRecalled = log.IsRecalled,
-            SendAt = log.SendAt,
+            MessageId = m.MessageId,
+            GroupId = m.GroupId,
+            UserId = m.UserId,
+            GroupNameSnapshot = m.Group.Name,
+            UserNameSnapshot = m.UserName,
+            Content = m.Content,
+            SendAt = m.SendAt,
+            IsRecalled = m.IsRecalled,
+            RecalledBy = m.RecalledBy,
             ArchiveReason = reason,
-            OperatorId = operatorId,
-            ArchivedAt = DateTimeOffset.UtcNow
+            OperatorId = operatorId
         });
 
         await db.ArchivedMessageLogs.AddRangeAsync(archives).ConfigureAwait(false);
-
         await db.SaveChangesAsync().ConfigureAwait(false);
 
-        LogArchiveAction(logger, recentLogs.Count, startMessageId, groupId, reason);
+        LogArchiveAction(logger, messagesToArchive.Count, startMessageId, groupId, reason);
     }
 
     [LoggerMessage(LogLevel.Information,

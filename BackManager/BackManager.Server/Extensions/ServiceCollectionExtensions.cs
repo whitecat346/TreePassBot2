@@ -42,6 +42,7 @@ public static class ServiceCollectionExtensions
 
         services.AddDbContextPool<BotDbContext>(options =>
                                                     options.UseNpgsql(connString));
+        services.AddLazyCache();
 
         services.AddBotEngineServices();
 

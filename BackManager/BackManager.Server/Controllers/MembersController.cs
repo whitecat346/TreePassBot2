@@ -37,7 +37,7 @@ public partial class MembersController(
         {
             var groupIdLong = ulong.Parse(groupId);
 
-            var fetched = await userManage.GetMemberListFromApiAsync(groupIdLong).ConfigureAwait(false);
+            var fetched = await userManage.GetMemberListAsync(groupIdLong).ConfigureAwait(false);
 
             var users = fetched.Skip(skip).Take(limit).ToList();
 
@@ -69,7 +69,7 @@ public partial class MembersController(
         try
         {
             var groupIdLong = ulong.Parse(groupId);
-            var fetched = await userManage.GetMemberListFromApiAsync(groupIdLong).ConfigureAwait(false);
+            var fetched = await userManage.GetMemberListAsync(groupIdLong).ConfigureAwait(false);
             var count = fetched.Count;
             return Ok(ApiResponse<object>.Ok(new { Count = count }, "获取群组成员数量成功"));
         }
@@ -85,11 +85,11 @@ public partial class MembersController(
     {
         try
         {
-            var groups = await userManage.GetGroupListFromApiAsync().ConfigureAwait(false);
+            var groups = await userManage.GetGroupListAsync().ConfigureAwait(false);
             var totalCount = 0;
             foreach (var group in groups)
             {
-                var members = await userManage.GetMemberListFromApiAsync(group.GroupId).ConfigureAwait(false);
+                var members = await userManage.GetMemberListAsync(group.GroupId).ConfigureAwait(false);
                 totalCount += members.Count;
             }
 

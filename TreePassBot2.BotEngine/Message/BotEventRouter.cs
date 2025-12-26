@@ -98,21 +98,21 @@ public partial class BotEventRouter
         await using var scope = _serviceProvider.CreateAsyncScope();
         var auditManager = scope.ServiceProvider.GetRequiredService<AuditManagerService>();
 
-        var verificationCode = e.Comment.Trim([' ', '\n']);
-        var (isAllowed, msg) =
-            await auditManager.CheckVerificationCodeAsync(e.UserId, verificationCode).ConfigureAwait(false);
+        var comment = e.Comment.Trim([' ', '\n']);
+        var (isAllowed, msg) = await auditManager.CheckVerificationCodeAsync(e.UserId, comment)
+                                                 .ConfigureAwait(false);
 
         if (isAllowed)
         {
             await e.AcceptAsync().ConfigureAwait(false);
-            await auditManager.MarkJoinedAsync(e.UserId).ConfigureAwait(false);
+            await auditManager.MarkJonedAsync(e.UserId).ConfigureAwait(false);
         }
         else
         {
             await e.RejectAsync(msg).ConfigureAwait(false);
         }
 
-        LogProcessedUserJoinRequest(e.UserId, verificationCode);
+        LogProcessedUserJoinRequest(e.UserId, comment);
     }
 
     private async Task BotContextOnOnGroupMemberDecreaseAsync(object _, GroupMemberDecreaseEventArgs e)

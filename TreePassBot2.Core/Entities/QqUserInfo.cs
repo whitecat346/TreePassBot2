@@ -26,12 +26,12 @@ public record QqUserInfo
     /// <summary>
     /// User name displaied in QQ or MessageTracker.
     /// </summary>
-    public string? UserName { get; set; }
+    public string UserName { get; set; } = string.Empty;
 
     /// <summary>
     /// Nick name of the user. (The original name)
     /// </summary>
-    public string? NickName { get; set; }
+    public string NickName { get; set; } = string.Empty;
 
     /// <summary>
     /// The role of the user.

@@ -236,8 +236,7 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
         {
             GroupId = data.GroupId,
             Name = data.GroupName,
-            MemberCount = data.MemberCount,
-            OwnerId = 0 // TODO: i will impl this later
+            MemberCount = data.MemberCount
         };
 
         return groupInfo;
@@ -290,8 +289,7 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
         {
             GroupId = group.GroupId,
             Name = group.GroupName,
-            MemberCount = group.MemberCount,
-            OwnerId = 0 // TODO: i will impl this later
+            MemberCount = group.MemberCount
         }).ToList();
 
         return res;
