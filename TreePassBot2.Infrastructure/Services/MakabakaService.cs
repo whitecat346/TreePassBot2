@@ -16,7 +16,7 @@ namespace TreePassBot2.Infrastructure.Services;
 /// <summary>
 /// Makabaka通信服务实现
 /// </summary>
-public class MakabakaService : ICommunicationService, IAsyncDisposable
+public partial class MakabakaService : ICommunicationService, IAsyncDisposable
 {
     private readonly ILogger<MakabakaService> _logger;
     private readonly MakabakaApp _makabakaApp;
@@ -49,7 +49,7 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
         ArgumentNullException.ThrowIfNull(message);
 
         var msg = message.ToString();
-        _logger.LogInformation("Send message: {Message}", msg);
+        LogSendMessage(msg);
 
         try
         {
@@ -320,4 +320,7 @@ public class MakabakaService : ICommunicationService, IAsyncDisposable
 
         _makabakaApp.Dispose();
     }
+
+    [LoggerMessage(LogLevel.Information, "Send message: {message}")]
+    partial void LogSendMessage(string message);
 }

@@ -48,11 +48,11 @@ public class BotApiImplService(
 
     /// <inheritdoc />
     public Task ApproveAuditAsync(ulong targetUserId) =>
-        auditManagerService.ApproveAuditRequestAsync(targetUserId, UserId);
+        auditManagerService.ApproveAuditAsync(targetUserId, UserId);
 
     /// <inheritdoc />
     public Task RejectAuditAsync(ulong targetUserId) =>
-        auditManagerService.DenyAuditRequestAsync(targetUserId, UserId);
+        auditManagerService.DenyAuditAsync(targetUserId, UserId);
 
     /// <inheritdoc />
     public Task AddAuditRequestAsync(ulong targetUserId) =>
@@ -60,5 +60,5 @@ public class BotApiImplService(
 
     /// <inheritdoc />
     public Task RemoveAuditRequestAsync(ulong targetUserId) =>
-        auditManagerService.RemoveAuditRequestAsync(targetUserId);
+        auditManagerService.RemoveAuditRequestAsync(targetUserId, GroupId);
 }

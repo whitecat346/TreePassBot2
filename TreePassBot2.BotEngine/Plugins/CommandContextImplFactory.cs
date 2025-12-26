@@ -22,10 +22,12 @@ public class CommandContextImplFactory(IServiceProvider serviceProvider)
         var isForwardMessage = eventData.Message[0] is ForwardSegment;
         var skipCount = isForwardMessage ? 3 : 2;
 
-        return eventData.Message.ToString()
+        return
+        [
+            .. eventData.Message.ToString()
                         .Split(' ', StringSplitOptions.RemoveEmptyEntries)
                         .Skip(skipCount)
-                        .ToArray();
+        ];
     }
 
     /// <summary>

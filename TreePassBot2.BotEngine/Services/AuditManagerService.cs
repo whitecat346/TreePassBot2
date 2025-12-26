@@ -124,10 +124,7 @@ public partial class AuditManagerService(
 
     public async Task<bool> AddAuditRequestAsync(ulong userId, ulong groupId)
     {
-        await db.AuditRequests
-                .Where(user => user.UserId == userId)
-                .ExecuteDeleteAsync()
-                .ConfigureAwait(false);
+        await RemoveAuditRequestAsync(userId, groupId).ConfigureAwait(false);
 
         var auditRequest = new AuditRequestData
         {
@@ -140,6 +137,12 @@ public partial class AuditManagerService(
 
         return true;
     }
+
+    public Task RemoveAuditRequestAsync(ulong userId, ulong groupId) =>
+        db.AuditRequests
+          .Where(user => user.UserId == userId)
+          .Where(user => user.GroupId == groupId)
+          .ExecuteDeleteAsync();
 
     public async Task MarkJonedAsync(ulong userId)
     {

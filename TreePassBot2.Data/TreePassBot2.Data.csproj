@@ -26,4 +26,8 @@
     <ProjectReference Include="..\TreePassBot2.Core\TreePassBot2.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
 </Project>

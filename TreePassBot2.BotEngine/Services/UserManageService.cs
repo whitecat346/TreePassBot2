@@ -128,7 +128,13 @@ public class UserManageService(
                 return groupsInDb;
             }
 
-            var fetchedGroups = await FetchGroupInfoAsync(0).ConfigureAwait(false);
+            var fetchedGroups = await FetchGroupInfoAsync().ConfigureAwait(false);
+
+            if (fetchedGroups.Count == 0)
+            {
+                return [];
+            }
+
             await UpdateDbGroupListAsync(fetchedGroups).ConfigureAwait(false);
             return fetchedGroups;
         }).ConfigureAwait(false);
@@ -195,7 +201,7 @@ public class UserManageService(
         }
     }
 
-    private async Task<IReadOnlyList<GroupInfo>> FetchGroupInfoAsync(ulong groupId)
+    private async Task<IReadOnlyList<GroupInfo>> FetchGroupInfoAsync()
     {
         var response = await communication.GetGroupListAsync().ConfigureAwait(false);
         return response ?? [];

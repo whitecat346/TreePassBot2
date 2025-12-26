@@ -28,9 +28,17 @@
   </PropertyGroup>
     <ItemGroup>
       <Compile Remove="logs\**" />
+      <Compile Remove="plugins\**" />
+      <Compile Remove="shadow_cache\**" />
       <Content Remove="logs\**" />
+      <Content Remove="plugins\**" />
+      <Content Remove="shadow_cache\**" />
       <EmbeddedResource Remove="logs\**" />
+      <EmbeddedResource Remove="plugins\**" />
+      <EmbeddedResource Remove="shadow_cache\**" />
       <None Remove="logs\**" />
+      <None Remove="plugins\**" />
+      <None Remove="shadow_cache\**" />
     </ItemGroup>
 
   <ItemGroup>

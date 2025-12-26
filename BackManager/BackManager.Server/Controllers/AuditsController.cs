@@ -6,6 +6,8 @@ using TreePassBot2.BotEngine.Services;
 using TreePassBot2.Core.Entities.Enums;
 using TreePassBot2.Data;
 
+// ReSharper disable RedundantAnonymousTypePropertyName
+
 // ReSharper disable ComplexConditionExpression
 
 namespace BackManager.Server.Controllers;
@@ -75,8 +77,8 @@ public partial class AuditsController(
                 return BadRequest(ApiResponse<object>.Error("无效的审核ID"));
             }
 
-            var (isSuccess, result) =
-                await auditManagerService.ApproveAuditRequestAsync(requestId, 0).ConfigureAwait(false);
+            var (isSuccess, _) =
+                await auditManagerService.ApproveAuditAsync(requestId, 0).ConfigureAwait(false);
             if (!isSuccess)
             {
                 return NotFound(ApiResponse<object>.Error("审核记录不存在"));
@@ -106,7 +108,7 @@ public partial class AuditsController(
                 return BadRequest(ApiResponse<object>.Error("无效的审核ID"));
             }
 
-            var (isSuccess, result) = await auditManagerService.DenyAuditRequestAsync(id, 0).ConfigureAwait(false);
+            var (isSuccess, _) = await auditManagerService.DenyAuditAsync(id, 0).ConfigureAwait(false);
             if (!isSuccess)
             {
                 return NotFound(ApiResponse<object>.Error("审核记录不存在"));

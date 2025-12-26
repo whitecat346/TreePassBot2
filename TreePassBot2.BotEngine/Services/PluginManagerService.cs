@@ -6,6 +6,8 @@ using TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
 using TreePassBot2.PluginSdk.Exceptions;
 using TreePassBot2.PluginSdk.Interfaces;
 
+// ReSharper disable FlagArgument
+
 namespace TreePassBot2.BotEngine.Services;
 
 public partial class PluginManagerService : IAsyncDisposable
@@ -139,7 +141,7 @@ public partial class PluginManagerService : IAsyncDisposable
     {
         if (_commandRouteTable.ContainsKey(trigger))
         {
-            LogTriggerTriggerIsAlreadyRegistered(_logger, trigger, supervisor.Meta.Id);
+            LogTriggerIsAlreadyRegistered(_logger, trigger, supervisor.Meta.Id);
             return;
         }
 
@@ -193,7 +195,7 @@ public partial class PluginManagerService : IAsyncDisposable
 
         await supervisor.SafeExecuteCommandAsync(command, cmdCtx).ConfigureAwait(false);
 
-        LogIssuedCommandCommandnameFromGroupidByUserid(_logger, command.Trigger, cmdCtx.GroupId, cmdCtx.SenderId);
+        LogIssuedCommand(_logger, command.Trigger, cmdCtx.GroupId, cmdCtx.SenderId);
     }
 
     private void SupervisorOnOnPluginException(string pluginId)
@@ -229,6 +231,7 @@ public partial class PluginManagerService : IAsyncDisposable
 
         foreach (var activePlugin in _activePlugins)
         {
+            activePlugin.Value.OnPluginException -= SupervisorOnOnPluginException;
             await activePlugin.Value.UnloadAsync().ConfigureAwait(false);
         }
 
@@ -238,26 +241,27 @@ public partial class PluginManagerService : IAsyncDisposable
     #region LogMethod
 
     [LoggerMessage(LogLevel.Error, "Fialed to load plugin {Id}")]
-    static partial void LogFialedToLoadPluginId(ILogger<PluginManagerService> logger, Exception ex, string id);
+    static partial void LogFialedToLoadPluginId(ILogger<PluginManagerService> logger,
+                                                Exception ex, string id);
 
     [LoggerMessage(LogLevel.Information, "Have loaded plugin: {name}; Registered {count} commands")]
     static partial void LogHaveLoadedPlugin(ILogger<PluginManagerService> logger,
                                             string name, int count);
 
     [LoggerMessage(LogLevel.Warning, "Trigger '{trigger}' is already registered by {newPlugin}")]
-    static partial void LogTriggerTriggerIsAlreadyRegistered(ILogger<PluginManagerService> logger,
-                                                             string trigger, string newPlugin);
+    static partial void LogTriggerIsAlreadyRegistered(ILogger<PluginManagerService> logger,
+                                                      string trigger, string newPlugin);
 
     [LoggerMessage(LogLevel.Trace, "Issued command {commandName} from {groupId} by {userId}")]
-    static partial void LogIssuedCommandCommandnameFromGroupidByUserid(ILogger<PluginManagerService> logger,
-                                                                       string commandName, ulong groupId, ulong userId);
+    static partial void LogIssuedCommand(ILogger<PluginManagerService> logger,
+                                         string commandName, ulong groupId, ulong userId);
 
     [LoggerMessage(LogLevel.Information, "Unload plugin {id} successfully")]
     static partial void LogUnloadPluginIdSuccessfully(ILogger<PluginManagerService> logger, string id);
 
     #endregion
 
-    [LoggerMessage(LogLevel.Error, "Fialed to delete old plugin file: {Id}; {Path}")]
-    static partial void LogFialedToDeleteOldPlugin(ILogger<PluginManagerService> logger, string Id,
-                                                   string Path, Exception exception);
+    [LoggerMessage(LogLevel.Error, "Fialed to delete old plugin file: {id}; {path}")]
+    static partial void LogFialedToDeleteOldPlugin(ILogger<PluginManagerService> logger,
+                                                   string id, string path, Exception exception);
 }
