@@ -1,6 +1,7 @@
 using BackManager.Server.Models;
 using Microsoft.AspNetCore.Mvc;
 using TreePassBot2.BotEngine.Services;
+using TreePassBot2.Core.Entities.Enums;
 
 // ReSharper disable ComplexConditionExpression
 
@@ -42,13 +43,16 @@ public partial class MembersController(
             var users = fetched.Skip(skip).Take(limit).ToList();
 
             var members = users
-                         .OrderByDescending(m => m.Role)
-                         .Select((user, _) => new
+                         .Where(u => u.Role == UserRole.Owner)
+                         .Concat(users.Where(u => u.Role == UserRole.Admin))
+                         .Concat(users.Where(u => u.Role == UserRole.Auditor))
+                         .Concat(users.Where(u => u.Role == UserRole.Member))
+                         .Select(user => new
                          {
                              GroupId = groupId,
                              UserId = user.QqId.ToString(),
-                             Username = user.UserName ?? $"用户{user.QqId}",
-                             Nickname = user.UserName ?? $"用户{user.QqId}",
+                             Username = user.UserName,
+                             Nickname = user.UserName,
                              Role = user.Role.ToString(),
                              JoinedAt = user.JoinedAt.ToString("O")
                          })

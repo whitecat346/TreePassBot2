@@ -5,43 +5,45 @@
 
     <!-- 筛选区域 -->
     <el-card shadow="never" class="mb-6">
-      <div class="filter-container flex flex-wrap gap-4 items-center">
-        <div class="flex items-center space-x-2">
-          <span class="text-sm font-medium text-gray-700">状态：</span>
-          <el-select v-model="filterStatus"
-                     placeholder="全部"
-                     clearable
-                     size="small"
-                     class="w-40">
-            <el-option label="待审核" value="Pending" />
-            <el-option label="已通过" value="Approved" />
-            <el-option label="已拒绝" value="Rejected" />
-          </el-select>
+      <div class="filter-container space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-700">状态：</span>
+            <el-select v-model="filterStatus"
+                       placeholder="全部"
+                       clearable
+                       size="small"
+                       class="w-40">
+              <el-option label="待审核" value="Pending" />
+              <el-option label="已通过" value="Approved" />
+              <el-option label="已拒绝" value="Rejected" />
+            </el-select>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-700">入群状态：</span>
+            <el-select v-model="filterEnteredGroup"
+                       placeholder="全部"
+                       clearable
+                       size="small"
+                       class="w-40">
+              <el-option label="已入群" :value="true" />
+              <el-option label="未入群" :value="false" />
+            </el-select>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-700">搜索：</span>
+            <el-input v-model="filterKeyword"
+                      placeholder="用户名/用户ID"
+                      clearable
+                      size="small"
+                      prefix-icon="Search"
+                      class="w-64" />
+          </div>
         </div>
 
-        <div class="flex items-center space-x-2">
-          <span class="text-sm font-medium text-gray-700">入群状态：</span>
-          <el-select v-model="filterEnteredGroup"
-                     placeholder="全部"
-                     clearable
-                     size="small"
-                     class="w-40">
-            <el-option label="已入群" :value="true" />
-            <el-option label="未入群" :value="false" />
-          </el-select>
-        </div>
-
-        <div class="flex items-center space-x-2">
-          <span class="text-sm font-medium text-gray-700">搜索：</span>
-          <el-input v-model="filterKeyword"
-                    placeholder="用户名/用户ID"
-                    clearable
-                    size="small"
-                    prefix-icon="Search"
-                    class="w-64" />
-        </div>
-
-        <div class="flex items-center space-x-2">
+        <div class="flex justify-end space-x-2">
           <el-button type="primary" size="small" @click="handleSearch">
             搜索
           </el-button>

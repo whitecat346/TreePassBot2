@@ -10,7 +10,7 @@ using TreePassBot2.PluginSdk.Interfaces;
 
 namespace TreePassBot2.BotEngine.Plugins;
 
-public class CommandContextImplFactory(IServiceProvider serviceProvider)
+public class CommandContextImplFactory(IServiceProvider serviceProvider, IOptions<BotOptions> options)
 {
     /// <summary>
     /// 解析消息参数
@@ -82,6 +82,7 @@ public class CommandContextImplFactory(IServiceProvider serviceProvider)
             Args = args,
             State = stateStorage,
             BotApi = botApi,
+            Options = options.Value,
             Logger = logger
         };
     }

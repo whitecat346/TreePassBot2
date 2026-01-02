@@ -5,7 +5,7 @@ using TreePassBot2.PluginSdk.Interfaces;
 
 namespace TreePassBot2.BotEngine.Services;
 
-public class PluginSupervisor(
+public partial class PluginSupervisor(
     PluginLoadAssemblyContext loadAssemblyCtx,
     ILogger logger) : IDisposable
 {
@@ -18,6 +18,7 @@ public class PluginSupervisor(
     public required string ShadowPluginFilePath;
     public required string RealPluginFilePath;
     public bool IsAlive { get; private set; } = true;
+    public bool IsActive { get; internal set; } = true;
 
     /// <summary>
     /// Invoke when plugin occurred exception and unloaded.
@@ -32,7 +33,7 @@ public class PluginSupervisor(
     /// </summary>
     public async Task SafeExecuteCommandAsync(IBotCommand cmd, ICommandContext ctx)
     {
-        if (!IsAlive)
+        if (!(IsActive && IsAlive))
         {
             return;
         }
@@ -50,13 +51,13 @@ public class PluginSupervisor(
     private async Task HandleExceptionAsync(Exception ex, string action)
     {
         _errorCount++;
-        logger.LogError(ex, "Plugin {Plugin} occurred a/an exception: {Action}. Current error count: {Count}",
-                        Meta.Name, action, _errorCount);
+        LogPluginException(logger, ex, Meta.Name, action, _errorCount);
 
         if (_errorCount >= MaxErrors)
         {
-            logger.LogCritical("Plugin {Plugin} occurred too many error, unloading...", Meta.Name);
+            LogPluginExceptionTooMany(logger, Meta.Name);
             IsAlive = false;
+            IsActive = false;
             await UnloadAsync().ConfigureAwait(false);
             OnPluginException?.Invoke(Meta.Id);
         }
@@ -87,4 +88,10 @@ public class PluginSupervisor(
         var tk = UnloadAsync();
         Task.WhenAll(tk);
     }
+
+    [LoggerMessage(LogLevel.Error, "Plugin {plugin} occurred a/an exception: {action}. Current error count: {count}")]
+    static partial void LogPluginException(ILogger logger, Exception ex, string plugin, string action, int count);
+
+    [LoggerMessage(LogLevel.Critical, "Plugin {plugin} occurred too many error, unloading...")]
+    static partial void LogPluginExceptionTooMany(ILogger logger, string plugin);
 }

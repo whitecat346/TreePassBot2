@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
@@ -19,7 +20,10 @@ public partial class PluginManagerService : IAsyncDisposable
     private readonly ConcurrentDictionary<string, (PluginSupervisor Supervisor, IBotCommand Command)>
         _commandRouteTable = [];
 
-    public IReadOnlyList<PluginSupervisor> ActivePlugins => _activePlugins.Values.ToList();
+    /// <summary>
+    /// Gets a read-only list of active plugins.
+    /// </summary>
+    public IReadOnlyList<PluginSupervisor> ActivePlugins => _activePlugins.Values.ToList().AsReadOnly();
 
     private readonly string _currentRootPath = Directory.GetCurrentDirectory();
     private readonly string _shadowCachePath;
@@ -30,12 +34,11 @@ public partial class PluginManagerService : IAsyncDisposable
         _logger = logger;
 
         _shadowCachePath = Path.Combine(_currentRootPath, "shadow_cache");
-        if (Directory.Exists(_shadowCachePath))
+        // Create shadow cache directory if it doesn't exist, don't delete existing contents
+        if (!Directory.Exists(_shadowCachePath))
         {
-            Directory.Delete(_shadowCachePath, true);
+            Directory.CreateDirectory(_shadowCachePath);
         }
-
-        Directory.CreateDirectory(_shadowCachePath);
     }
 
     /// <summary>
@@ -59,62 +62,130 @@ public partial class PluginManagerService : IAsyncDisposable
 
         var alc = new PluginLoadAssemblyContext(shadowPath);
         var assembly = alc.LoadFromAssemblyPath(shadowPath);
-        var pluginType = assembly.GetTypes().FirstOrDefault(t => typeof(IBotPlugin).IsAssignableFrom(t))
-                      ?? throw new InvalidOperationException(
-                             "Cannot load this dll that not implemnet IBotPlugin interface.");
+        var pluginTypes = assembly.GetTypes().Where(t => typeof(IBotPlugin).IsAssignableFrom(t) && !t.IsAbstract)
+                                  .ToList();
 
-        if (Activator.CreateInstance(pluginType) is not IBotPlugin pluginInstance)
+        if (pluginTypes.Count == 0)
         {
-            throw new FailedToActivatePluginException($"Fialed to activate plugin: {pluginType}");
+            throw new InvalidOperationException(
+                "Cannot load this dll that not implement IBotPlugin interface.");
         }
 
-        var context = new PluginLoadingLoadingContextImpl(pluginInstance.Meta.Id, _services);
+        var loadedPlugins = 0;
 
-        try
+        foreach (var pluginType in pluginTypes)
         {
-            await pluginInstance.OnLoadedAsync(context).ConfigureAwait(false);
+            if (await LoadSinglePluginAsync(alc, dllPath, shadowPath, pluginType).ConfigureAwait(false))
+            {
+                loadedPlugins++;
+            }
         }
-        catch (Exception ex)
+
+        // If no plugins were loaded successfully, unload the ALC and return false
+        if (loadedPlugins == 0)
         {
-            LogFialedToLoadPluginId(_logger, ex, pluginInstance.Meta.Id);
             alc.Unload();
             return false;
         }
 
-        var supervisor = new PluginSupervisor(alc, _logger)
+        return true;
+    }
+
+
+    /// <summary>
+    /// Copies a file asynchronously with appropriate stream management.
+    /// </summary>
+    /// <param name="source">The source file path.</param>
+    /// <param name="target">The target file path.</param>
+    /// <returns>A task representing the asynchronous copy operation.</returns>
+    private static async Task CopyFileAsync(string source, string target)
+    {
+        await using var sourceStream = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        await using var targetStream = new FileStream(target, FileMode.Create);
+        await sourceStream.CopyToAsync(targetStream).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Loads a single plugin from the specified type.
+    /// </summary>
+    /// <param name="alc">The assembly load context.</param>
+    /// <param name="realPath">The real path to the plugin DLL.</param>
+    /// <param name="shadowPath">The shadow path to the plugin DLL.</param>
+    /// <param name="pluginType">The plugin type to load.</param>
+    /// <returns><c>true</c> if the plugin was loaded successfully; otherwise, <c>false</c>.</returns>
+    private async Task<bool> LoadSinglePluginAsync(PluginLoadAssemblyContext alc, string realPath, string shadowPath,
+                                                   Type pluginType)
+    {
+        try
         {
-            Plugin = pluginInstance,
-            ShadowPluginFilePath = shadowPath,
-            RealPluginFilePath = dllPath
-        };
-        supervisor.OnPluginException += SupervisorOnOnPluginException;
+            // Create plugin instance with dependency injection support
+            var pluginInstance = (IBotPlugin)ActivatorUtilities.CreateInstance(_services, pluginType);
+            if (pluginInstance is null)
+            {
+                throw new FailedToActivatePluginException($"Failed to activate plugin: {pluginType}");
+            }
 
-        var pluginId = pluginInstance.Meta.Id;
-
-        // unload and delete if already loaded
-        if (_activePlugins.TryGetValue(pluginId, out var activePlugin))
-        {
-            await UnloadPluginAsync(pluginId).ConfigureAwait(false);
-            _activePlugins.Remove(pluginId, out _);
-
+            // Initialize plugin
+            var context = new PluginLoadingLoadingContextImpl(pluginInstance.Meta.Id, _services);
             try
             {
-                File.Delete(activePlugin.RealPluginFilePath);
+                await pluginInstance.OnLoadedAsync(context).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                LogFialedToDeleteOldPlugin(_logger, activePlugin.Meta.Id, activePlugin.ShadowPluginFilePath, ex);
-
+                LogFailedToLoadPluginId(_logger, ex, pluginInstance.Meta.Id);
                 return false;
             }
 
-            _activePlugins.TryRemove(pluginId, out _);
+            // Create supervisor
+            var supervisor = new PluginSupervisor(alc, _logger)
+            {
+                Plugin = pluginInstance,
+                ShadowPluginFilePath = shadowPath,
+                RealPluginFilePath = realPath
+            };
+            supervisor.OnPluginException += SupervisorOnOnPluginException;
+
+            // Cleanup existing plugin if it exists
+            var pluginId = pluginInstance.Meta.Id;
+            if (_activePlugins.TryGetValue(pluginId, out var activePlugin))
+            {
+                await UnloadPluginAsync(pluginId).ConfigureAwait(false);
+                _activePlugins.Remove(pluginId, out _);
+
+                try
+                {
+                    File.Delete(activePlugin.RealPluginFilePath);
+                }
+                catch (Exception ex)
+                {
+                    LogFailedToDeleteOldPlugin(_logger, activePlugin.Meta.Id, activePlugin.ShadowPluginFilePath, ex);
+                    return false;
+                }
+            }
+
+            // Register plugin and commands
+            _activePlugins[pluginId] = supervisor;
+            RegisterPluginCommands(pluginInstance, supervisor, context);
+
+            return true;
         }
+        catch (Exception ex)
+        {
+            LogFailedToProcessPluginType(_logger, ex, pluginType.FullName ?? "Unknown");
+            return false;
+        }
+    }
 
-        // add active plugin
-        _activePlugins[pluginId] = supervisor;
-
-        // register all commands
+    /// <summary>
+    /// Registers all commands for a plugin.
+    /// </summary>
+    /// <param name="pluginInstance">The plugin instance.</param>
+    /// <param name="supervisor">The plugin supervisor.</param>
+    /// <param name="context">The plugin loading context.</param>
+    private void RegisterPluginCommands(IBotPlugin pluginInstance, PluginSupervisor supervisor,
+                                        PluginLoadingLoadingContextImpl context)
+    {
         foreach (var cmd in context.RegisteredCommands)
         {
             RegisterRoute(cmd.Trigger, cmd, supervisor);
@@ -126,15 +197,6 @@ public partial class PluginManagerService : IAsyncDisposable
         }
 
         LogHaveLoadedPlugin(_logger, pluginInstance.Meta.Name, context.RegisteredCommands.Count);
-
-        return true;
-    }
-
-    private async Task CopyFileAsync(string source, string target)
-    {
-        await using var sourceStream = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        await using var targetStream = new FileStream(target, FileMode.Create);
-        await sourceStream.CopyToAsync(targetStream).ConfigureAwait(false);
     }
 
     private void RegisterRoute(string trigger, IBotCommand cmd, PluginSupervisor supervisor)
@@ -148,6 +210,12 @@ public partial class PluginManagerService : IAsyncDisposable
         _commandRouteTable[trigger] = (supervisor, cmd);
     }
 
+    /// <summary>
+    /// Get plugin id from trigger
+    /// </summary>
+    /// <param name="cmdTrigger">Trigger</param>
+    /// <param name="id">Got plugin id</param>
+    /// <returns>Is success.</returns>
     public Task<bool> TryGetPluginIdAsync(string cmdTrigger, [NotNullWhen(true)] out string? id)
     {
         id = null;
@@ -163,13 +231,37 @@ public partial class PluginManagerService : IAsyncDisposable
     }
 
     /// <summary>
+    /// Toggles the active state of a plugin.
+    /// </summary>
+    /// <param name="pluginId">The ID of the plugin to toggle.</param>
+    /// <returns><c>true</c> if the plugin state was toggled; otherwise, <c>false</c> if the plugin was not found.</returns>
+    public Task<bool> TogglePluginStateAsync(string pluginId)
+    {
+        // Use case-insensitive lookup for plugin ID
+        var plugin = _activePlugins.Values
+                                   .SingleOrDefault(p => p.Meta.Id.Equals(
+                                                        pluginId, StringComparison.OrdinalIgnoreCase));
+
+        if (plugin is null)
+        {
+            return Task.FromResult(false);
+        }
+
+        plugin.IsActive = !plugin.IsActive;
+
+        return Task.FromResult(true);
+    }
+
+    /// <summary>
     /// Dispatch command to appropriate plugin.
     /// </summary>
     /// <param name="cmdTrigger">Matched command.</param>
     /// <param name="cmdCtx">Message context.</param>
+    /// <param name="ignoreNotFound">Ignore not found command if <see langword="true"/>. (Default <see langword="false"/>)</param>
+    /// <exception cref="KeyNotFoundException">Throws if command executer not found when <see cref="ignoreNotFound"/> is <see langword="true"/></exception>
     public async Task DispatchCommandAsync(string cmdTrigger, ICommandContext cmdCtx, bool ignoreNotFound = false)
     {
-        _logger.LogInformation("Dispatch command: {Trigger}", cmdTrigger);
+        LogDispatchCommand(_logger, cmdTrigger);
 
         PluginSupervisor supervisor;
         IBotCommand command;
@@ -198,29 +290,50 @@ public partial class PluginManagerService : IAsyncDisposable
         LogIssuedCommand(_logger, command.Trigger, cmdCtx.GroupId, cmdCtx.SenderId);
     }
 
-    private void SupervisorOnOnPluginException(string pluginId)
-    {
-        var tk = UnloadPluginAsync(pluginId);
-        Task.WhenAny(tk);
-    }
-
-    private async Task UnloadPluginAsync(string pluginId)
+    /// <summary>
+    /// Unloads a plugin by its ID.
+    /// </summary>
+    /// <param name="pluginId">The ID of the plugin to unload.</param>
+    public async Task UnloadPluginAsync(string pluginId)
     {
         if (_activePlugins.TryRemove(pluginId, out var supervisor))
         {
-            await supervisor.UnloadAsync().ConfigureAwait(false);
+            // Remove event handler to prevent memory leaks
+            supervisor.OnPluginException -= SupervisorOnOnPluginException;
 
-            var keysToRemove = _commandRouteTable
-                              .Where(kvp => kvp.Value.Supervisor == supervisor)
-                              .Select(kvp => kvp.Key)
-                              .ToList();
-
-            foreach (var key in keysToRemove)
+            try
             {
-                _commandRouteTable.TryRemove(key, out _);
-            }
+                // Unload the plugin
+                await supervisor.UnloadAsync().ConfigureAwait(false);
 
-            LogUnloadPluginIdSuccessfully(_logger, pluginId);
+                // Remove all command routes associated with this plugin
+                RemovePluginCommandRoutes(supervisor);
+
+                LogUnloadPluginIdSuccessfully(_logger, pluginId);
+            }
+            catch (Exception ex)
+            {
+                LogErrorUnloadingPlugin(_logger, ex, pluginId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Removes all command routes associated with a plugin supervisor.
+    /// </summary>
+    /// <param name="supervisor">The supervisor whose command routes to remove.</param>
+    private void RemovePluginCommandRoutes(PluginSupervisor supervisor)
+    {
+        // Find all keys to remove using a more efficient approach
+        var keysToRemove = _commandRouteTable
+                          .Where(kvp => kvp.Value.Supervisor == supervisor)
+                          .Select(kvp => kvp.Key)
+                          .ToList();
+
+        // Remove all found keys
+        foreach (var key in keysToRemove)
+        {
+            _commandRouteTable.TryRemove(key, out _);
         }
     }
 
@@ -238,10 +351,19 @@ public partial class PluginManagerService : IAsyncDisposable
         _activePlugins.Clear();
     }
 
+    /// <summary>
+    /// Handles plugin exception events by unloading the problematic plugin.
+    /// </summary>
+    /// <param name="pluginId">The ID of the plugin that encountered an exception.</param>
+    private async void SupervisorOnOnPluginException(string pluginId)
+    {
+        await UnloadPluginAsync(pluginId).ConfigureAwait(false);
+    }
+
     #region LogMethod
 
-    [LoggerMessage(LogLevel.Error, "Fialed to load plugin {Id}")]
-    static partial void LogFialedToLoadPluginId(ILogger<PluginManagerService> logger,
+    [LoggerMessage(LogLevel.Error, "Failed to load plugin {Id}")]
+    static partial void LogFailedToLoadPluginId(ILogger<PluginManagerService> logger,
                                                 Exception ex, string id);
 
     [LoggerMessage(LogLevel.Information, "Have loaded plugin: {name}; Registered {count} commands")]
@@ -259,9 +381,22 @@ public partial class PluginManagerService : IAsyncDisposable
     [LoggerMessage(LogLevel.Information, "Unload plugin {id} successfully")]
     static partial void LogUnloadPluginIdSuccessfully(ILogger<PluginManagerService> logger, string id);
 
-    #endregion
 
-    [LoggerMessage(LogLevel.Error, "Fialed to delete old plugin file: {id}; {path}")]
-    static partial void LogFialedToDeleteOldPlugin(ILogger<PluginManagerService> logger,
+    [LoggerMessage(LogLevel.Error, "Failed to delete old plugin file: {id}; {path}")]
+    static partial void LogFailedToDeleteOldPlugin(ILogger<PluginManagerService> logger,
                                                    string id, string path, Exception exception);
+
+    [LoggerMessage(LogLevel.Trace, "Dispatch command: {trigger}")]
+    static partial void LogDispatchCommand(ILogger<PluginManagerService> logger, string trigger);
+
+
+    [LoggerMessage(LogLevel.Error, "Failed to process plugin type {pluginType}")]
+    static partial void LogFailedToProcessPluginType(ILogger<PluginManagerService> logger,
+                                                     Exception ex, string pluginType);
+
+    [LoggerMessage(LogLevel.Error, "Error unloading plugin {pluginId}")]
+    static partial void LogErrorUnloadingPlugin(ILogger<PluginManagerService> logger,
+                                                Exception ex, string pluginId);
+
+    #endregion
 }

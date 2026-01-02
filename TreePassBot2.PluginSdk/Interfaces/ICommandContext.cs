@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using TreePassBot2.Core.Options;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Models.MessageSegments;
 
@@ -16,6 +17,7 @@ public interface ICommandContext
     string[] Args { get; }
     IPluginStateStorage State { get; }
     IBotApi BotApi { get; }
+    BotOptions Options { get; }
     ILogger<ICommandContext> Logger { get; }
     Task ReplyAsync(Message msg);
 

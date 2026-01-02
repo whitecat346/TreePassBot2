@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using TreePassBot2.Core.Options;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
 using TreePassBot2.PluginSdk.Interfaces;
@@ -38,6 +39,9 @@ public class CommandContextImpl(ICommunicationService communicationService) : IC
 
     /// <inheritdoc />
     public required IBotApi BotApi { get; init; }
+
+    /// <inheritdoc />
+    public required BotOptions Options { get; init; }
 
     public required ILogger<ICommandContext> Logger { get; init; }
 

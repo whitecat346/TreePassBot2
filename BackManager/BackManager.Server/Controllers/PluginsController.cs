@@ -135,6 +135,19 @@ public partial class PluginsController(
         }
     }
 
+    [HttpGet("{pluginId}/toggle")]
+    public async Task<IActionResult> TogglePlugin(string pluginId)
+    {
+        var result = await pluginManager.TogglePluginStateAsync(pluginId).ConfigureAwait(false);
+
+        if (!result)
+        {
+            return NotFound(ApiResponse<object>.Error("Plugin not found.", 404));
+        }
+
+        return Ok(ApiResponse<object>.Ok(null));
+    }
+
     #region LoggerMethods
 
     [LoggerMessage(LogLevel.Error, "Failed to get plugin list: {error}")]
@@ -159,8 +172,8 @@ public partial class PluginsController(
     static partial void LogFailedToUploadPluginFileError(ILogger<PluginsController> logger, Exception error,
                                                          string msg);
 
-    #endregion
+    [LoggerMessage(LogLevel.Error, "Failed to get enabled plugin count: {exMessage}")]
+    static partial void LogFailedToGetEnabledPluginCountExmessage(ILogger<PluginsController> logger, string exMessage);
 
-    [LoggerMessage(LogLevel.Error, "Failed to get enabled plugin count: {ExMessage}")]
-    static partial void LogFailedToGetEnabledPluginCountExmessage(ILogger<PluginsController> logger, string ExMessage);
+    #endregion
 }

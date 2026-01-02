@@ -2,7 +2,7 @@ using TreePassBot2.Infrastructure.MakabakaAdaptor.Models;
 using TreePassBot2.PluginSdk.Entities.Enums;
 using TreePassBot2.PluginSdk.Interfaces;
 
-namespace ArchiveMessage;
+namespace MessageArchiver;
 
 public class ArchiveCommand : IBotCommand
 {

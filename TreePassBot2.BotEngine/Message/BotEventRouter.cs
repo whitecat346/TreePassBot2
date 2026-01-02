@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TreePassBot2.BotEngine.Message.Routers.Event;
 using TreePassBot2.BotEngine.Services;
+using TreePassBot2.Core.Entities;
 using TreePassBot2.Core.Entities.Enums;
 using TreePassBot2.Core.Options;
 using TreePassBot2.Data;
@@ -21,6 +22,7 @@ public partial class BotEventRouter
     private readonly MessageRouter _router;
     private readonly IServiceProvider _serviceProvider;
     private readonly BotOptions _config;
+    private readonly ICommunicationService _qqApi;
 
     public BotEventRouter(
         IServiceProvider serviceProvider,
@@ -30,6 +32,8 @@ public partial class BotEventRouter
 
         _logger = _serviceProvider.GetRequiredService<ILogger<BotEventRouter>>();
         _router = _serviceProvider.GetRequiredService<MessageRouter>();
+        _qqApi = _serviceProvider.GetRequiredService<ICommunicationService>();
+
         _config = config.Value;
     }
 
@@ -68,7 +72,7 @@ public partial class BotEventRouter
         var archiver = scope.ServiceProvider.GetRequiredService<MessageArchiveService>();
         var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
 
-        var latestMessageId = await db.ArchivedMessageLogs
+        var latestMessageId = await db.MessageLogs
                                       .Where(x => x.GroupId == e.GroupId && x.UserId == e.UserId)
                                       .OrderByDescending(x => x.Id)
                                       .Select(x => x.MessageId)
@@ -77,7 +81,7 @@ public partial class BotEventRouter
 
         if (latestMessageId == 0)
         {
-            LogFialedToGetLatestMessageLog();
+            LogFialedToGetLatestMessage();
             return;
         }
 
@@ -126,7 +130,7 @@ public partial class BotEventRouter
         var archiver = scope.ServiceProvider.GetRequiredService<MessageArchiveService>();
         var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
 
-        var latestMessageId = await db.ArchivedMessageLogs
+        var latestMessageId = await db.MessageLogs
                                       .Where(x => x.GroupId == e.GroupId && x.UserId == e.UserId)
                                       .OrderByDescending(x => x.Id)
                                       .Select(x => x.MessageId)
@@ -135,7 +139,7 @@ public partial class BotEventRouter
 
         if (latestMessageId == 0)
         {
-            LogFialedToGetLatestMessageLog();
+            LogFialedToGetLatestMessage();
             return;
         }
 
@@ -150,15 +154,33 @@ public partial class BotEventRouter
 
     private async Task BotContextOnOnGroupMemberIncreaseAsync(object _, GroupMemberIncreaseEventArgs e)
     {
-        if (e.GroupId != _config.AuditGroupId)
+        // add user into db
+        var memberInfo = await _qqApi.GetGroupMemberInfoAsync(e.GroupId, e.UserId).ConfigureAwait(false);
+
+        if (memberInfo is null)
         {
             return;
         }
 
-        await using var scope = _serviceProvider.CreateAsyncScope();
-        var auditManager = scope.ServiceProvider.GetRequiredService<AuditManagerService>();
+        var userInfo = new QqUserInfo
+        {
+            QqId = e.UserId,
+            GroupId = e.GroupId,
+            UserName = memberInfo.UserName,
+            NickName = memberInfo.NickName,
+            Role = UserRole.Member,
+            JoinedAt = memberInfo.JoinedAt
+        };
 
-        await auditManager.AddAuditRequestAsync(e.UserId, e.GroupId).ConfigureAwait(false);
+        await using var scope = _serviceProvider.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
+        await db.Users.AddAsync(userInfo).ConfigureAwait(false);
+
+        if (e.GroupId == _config.AuditGroupId)
+        {
+            var auditManager = scope.ServiceProvider.GetRequiredService<AuditManagerService>();
+            await auditManager.AddAuditRequestAsync(e.UserId, e.GroupId).ConfigureAwait(false);
+        }
     }
 
     private Task BotContextOnOnGroupMessageAsync(object _, GroupMessageEventArgs e)
@@ -190,12 +212,16 @@ public partial class BotEventRouter
         };
     }
 
+    #region Log Method
+
     [LoggerMessage(LogLevel.Error, "Fialed to get latest message log id")]
-    partial void LogFialedToGetLatestMessageLog();
+    partial void LogFialedToGetLatestMessage();
 
     [LoggerMessage(LogLevel.Information, "Handle message: {msgId}")]
     partial void LogHandleMessageMsgid(long msgId);
 
     [LoggerMessage(LogLevel.Information, "Processed user {userId} with {comment}")]
     partial void LogProcessedUserJoinRequest(ulong userId, string comment);
+
+    #endregion
 }

@@ -30,6 +30,10 @@ public class BotApiImplService(
         communicationService.GetGroupMemberListAsync(GroupId);
 
     /// <inheritdoc />
+    public Task<List<MemberInfo>?> GetGroupMemberListAsync(ulong groupId) =>
+        communicationService.GetGroupMemberListAsync(groupId);
+
+    /// <inheritdoc />
     public Task WithdrawMessageAsync(long messageId) =>
         communicationService.WithdrawMessageAsync(messageId);
 
@@ -61,4 +65,8 @@ public class BotApiImplService(
     /// <inheritdoc />
     public Task RemoveAuditRequestAsync(ulong targetUserId) =>
         auditManagerService.RemoveAuditRequestAsync(targetUserId, GroupId);
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<ulong>> GetAuditListAsync() =>
+        auditManagerService.GetAllAuditQqIdAsync();
 }

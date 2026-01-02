@@ -1,6 +1,7 @@
 using LazyCache;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using TreePassBot2.BotEngine.Utils;
 using TreePassBot2.Core.Entities;
 using TreePassBot2.Data;
 using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
@@ -14,6 +15,19 @@ public class UserManageService(
     ICommunicationService communication,
     IAppCache cache)
 {
+    #region Init
+
+    public async Task InitInfoAsync()
+    {
+        var groupList = await GetGroupListAsync(true).ConfigureAwait(false);
+        foreach (var group in groupList)
+        {
+            _ = await GetMemberListAsync(group.GroupId, true).ConfigureAwait(false);
+        }
+    }
+
+    #endregion
+
     #region Member
 
     /// <summary>
@@ -24,7 +38,7 @@ public class UserManageService(
     /// <returns>群组成员列表</returns>
     public Task<IReadOnlyList<QqUserInfo>> GetMemberListAsync(ulong groupId, bool forceUpdate = false)
     {
-        var cacheKey = $"MemberList_{groupId}";
+        var cacheKey = $"GetMemberList_{groupId}";
         var cachedList = cache.GetOrAddAsync(cacheKey, async () =>
         {
             var usersInDb = await GetMemberListFromDbAsync(groupId).ConfigureAwait(false);
@@ -41,6 +55,50 @@ public class UserManageService(
         });
 
         return cachedList;
+    }
+
+    public async Task<QqUserInfo> GetMemberInfoAsync(ulong groupId, ulong userId, bool forceUpdate = false)
+    {
+        var cacheKey = $"GetMemberInfo_{groupId}_{userId}";
+        var cachedInfo = await cache.GetOrAddAsync(cacheKey, async () =>
+        {
+            await using var scope = serviceProvider.CreateAsyncScope();
+            var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
+
+            var userInDb = await db.Users.SingleOrDefaultAsync(u => u.GroupId == groupId && u.QqId == userId)
+                                   .ConfigureAwait(false);
+
+            if (userInDb is null)
+            {
+                var userInfo = await FetchMemberInfoAsync(groupId, userId).ConfigureAwait(false);
+                await db.Users.AddAsync(userInfo).ConfigureAwait(false);
+
+                return userInfo;
+            }
+
+            if (forceUpdate)
+            {
+                var userInfo = await FetchMemberInfoAsync(groupId, userId).ConfigureAwait(false);
+                db.Update(userInfo);
+
+                return userInfo;
+            }
+
+            return userInDb;
+        }).ConfigureAwait(false);
+
+        return cachedInfo;
+    }
+
+    private async Task<QqUserInfo> FetchMemberInfoAsync(ulong groupId, ulong userId)
+    {
+        var userInfo = await communication.GetGroupMemberInfoAsync(groupId, userId).ConfigureAwait(false);
+        if (userInfo is null)
+        {
+            throw new InvalidDataException("User info cannot be null.");
+        }
+
+        return MemberToUserConverter.ConverToQqUserInfo(userInfo, groupId);
     }
 
     private async Task<IReadOnlyList<QqUserInfo>> GetMemberListFromDbAsync(ulong groupId)
@@ -101,15 +159,7 @@ public class UserManageService(
             return [];
         }
 
-        var users = response.Select(it => new QqUserInfo
-        {
-            QqId = it.QqId,
-            GroupId = groupId,
-            UserName = it.UserName,
-            NickName = it.NickName,
-            Role = it.Role,
-            JoinedAt = it.JoinedAt
-        }).ToList();
+        var users = response.Select(m => MemberToUserConverter.ConverToQqUserInfo(m, groupId)).ToList();
 
         return users;
     }
@@ -128,7 +178,7 @@ public class UserManageService(
                 return groupsInDb;
             }
 
-            var fetchedGroups = await FetchGroupInfoAsync().ConfigureAwait(false);
+            var fetchedGroups = await FetchGroupListAsync().ConfigureAwait(false);
 
             if (fetchedGroups.Count == 0)
             {
@@ -142,14 +192,45 @@ public class UserManageService(
         return cached;
     }
 
-    private Task<GroupInfo> GetGroupInfoAsync(ulong groupId)
+    public Task<GroupInfo> GetGroupInfoAsync(ulong groupId, bool forceUpdate = false)
     {
         var cached = cache.GetOrAddAsync($"GetGroupInfo_{groupId}", async () =>
         {
             var cachedGroups = await GetGroupListAsync().ConfigureAwait(false);
-            var groupInfo = cachedGroups.Single(g => g.GroupId == groupId);
+            var groupInfoInDb = cachedGroups.SingleOrDefault(g => g.GroupId == groupId);
 
-            return groupInfo;
+            await using var scope = serviceProvider.CreateAsyncScope();
+            var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
+
+            if (groupInfoInDb is null)
+            {
+                var groupInfo = await FetchGroupInfoAsync(groupId).ConfigureAwait(false);
+
+                if (groupInfo is null)
+                {
+                    throw new InvalidDataException("Group info cannot be null");
+                }
+
+                await db.Groups.AddAsync(groupInfo).ConfigureAwait(false);
+
+                return groupInfo;
+            }
+
+            if (forceUpdate)
+            {
+                var groupInfo = await FetchGroupInfoAsync(groupId).ConfigureAwait(false);
+
+                if (groupInfo is null)
+                {
+                    throw new InvalidDataException("Group info cannot be null");
+                }
+
+                db.Update(groupInfo);
+
+                return groupInfo;
+            }
+
+            return groupInfoInDb;
         });
 
 
@@ -201,10 +282,16 @@ public class UserManageService(
         }
     }
 
-    private async Task<IReadOnlyList<GroupInfo>> FetchGroupInfoAsync()
+    private async Task<IReadOnlyList<GroupInfo>> FetchGroupListAsync()
     {
         var response = await communication.GetGroupListAsync().ConfigureAwait(false);
         return response ?? [];
+    }
+
+    private async Task<GroupInfo?> FetchGroupInfoAsync(ulong groupId)
+    {
+        var response = await communication.GetGroupInfoAsync(groupId).ConfigureAwait(false);
+        return response;
     }
 
     #endregion

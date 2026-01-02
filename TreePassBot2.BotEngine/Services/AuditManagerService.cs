@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TreePassBot2.BotEngine.Utils;
 using TreePassBot2.Core.Entities;
@@ -11,7 +12,7 @@ using TreePassBot2.Infrastructure.MakabakaAdaptor.Interfaces;
 namespace TreePassBot2.BotEngine.Services;
 
 public partial class AuditManagerService(
-    BotDbContext db,
+    IServiceScopeFactory scopeFactory,
     ICommunicationService commuService,
     ILogger<AuditManagerService> logger)
 {
@@ -37,10 +38,13 @@ public partial class AuditManagerService(
                                                                     ulong processorId,
                                                                     AuditStatus targetStatus)
     {
+        using var scope = scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
+
         var auditRequest = identifier switch
         {
-            Guid auditId => await GetAuditRequestAsync(auditId).ConfigureAwait(false),
-            ulong userId => await GetAuditRequestAsync(userId).ConfigureAwait(false),
+            Guid auditId => await GetAuditRequestAsync(auditId, db).ConfigureAwait(false),
+            ulong userId => await GetAuditRequestAsync(userId, db).ConfigureAwait(false),
             _ => throw new ArgumentOutOfRangeException(nameof(identifier), identifier, "Invalied user identifier.")
         };
 
@@ -75,7 +79,10 @@ public partial class AuditManagerService(
         if (status is AuditStatus.Approved)
         {
             await commuService.AnnounceApprovedAuditActionAsync(
-                                   request.UserId, request.GroupId, "您的申请已通过！", code!)
+                                   request.UserId,
+                                   request.GroupId,
+                                   "您的申请已通过！\n验证码有30分钟的有效期，请及时使用！\n如果验证码过期，请自行找管理处理",
+                                   code!)
                               .ConfigureAwait(false);
         }
         else
@@ -90,7 +97,10 @@ public partial class AuditManagerService(
     public async Task<(bool IsAllowed, string Message)> CheckVerificationCodeAsync(
         ulong userId, string verificationCode)
     {
-        var auditRequest = await GetAuditRequestAsync(userId).ConfigureAwait(false);
+        using var scope = scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
+
+        var auditRequest = await GetAuditRequestAsync(userId, db).ConfigureAwait(false);
 
         if (auditRequest == null)
         {
@@ -120,11 +130,26 @@ public partial class AuditManagerService(
         return (true, string.Empty);
     }
 
+    public async Task<IReadOnlyList<ulong>> GetAllAuditQqIdAsync()
+    {
+        using var scope = scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
+
+        var ids = await db.AuditRequests
+                          .Select(a => a.UserId)
+                          .ToListAsync().ConfigureAwait(false);
+
+        return ids;
+    }
+
     #region Basic CRUD
 
     public async Task<bool> AddAuditRequestAsync(ulong userId, ulong groupId)
     {
-        await RemoveAuditRequestAsync(userId, groupId).ConfigureAwait(false);
+        using var scope = scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
+
+        await RemoveAuditRequestAsync(userId, groupId, db).ConfigureAwait(false);
 
         var auditRequest = new AuditRequestData
         {
@@ -138,15 +163,36 @@ public partial class AuditManagerService(
         return true;
     }
 
-    public Task RemoveAuditRequestAsync(ulong userId, ulong groupId) =>
-        db.AuditRequests
-          .Where(user => user.UserId == userId)
-          .Where(user => user.GroupId == groupId)
-          .ExecuteDeleteAsync();
+    // 修复：必须确保在 Scope 销毁前 await 任务
+    public async Task RemoveAuditRequestAsync(ulong userId, ulong groupId, BotDbContext? db = null)
+    {
+        if (db is null)
+        {
+            using var scope = scopeFactory.CreateScope();
+            var localDb = scope.ServiceProvider.GetRequiredService<BotDbContext>();
+
+            await localDb.AuditRequests
+                         .Where(user => user.UserId == userId)
+                         .Where(user => user.GroupId == groupId)
+                         .ExecuteDeleteAsync()
+                         .ConfigureAwait(false);
+        }
+        else
+        {
+            await db.AuditRequests
+                    .Where(user => user.UserId == userId)
+                    .Where(user => user.GroupId == groupId)
+                    .ExecuteDeleteAsync()
+                    .ConfigureAwait(false);
+        }
+    }
 
     public async Task MarkJonedAsync(ulong userId)
     {
-        var request = await GetAuditRequestAsync(userId).ConfigureAwait(false);
+        using var scope = scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
+
+        var request = await GetAuditRequestAsync(userId, db).ConfigureAwait(false);
         if (request is null)
         {
             return;
@@ -156,10 +202,10 @@ public partial class AuditManagerService(
         await db.SaveChangesAsync().ConfigureAwait(false);
     }
 
-    private Task<AuditRequestData?> GetAuditRequestAsync(Guid auditId) =>
+    private Task<AuditRequestData?> GetAuditRequestAsync(Guid auditId, BotDbContext db) =>
         db.AuditRequests.SingleOrDefaultAsync(audit => audit.Id == auditId);
 
-    private Task<AuditRequestData?> GetAuditRequestAsync(ulong userId) =>
+    private Task<AuditRequestData?> GetAuditRequestAsync(ulong userId, BotDbContext db) =>
         db.AuditRequests.SingleOrDefaultAsync(audit => audit.UserId == userId);
 
     #endregion

@@ -5,44 +5,47 @@
 
     <!-- 筛选和搜索区域 -->
     <el-card shadow="never" class="mb-6">
-      <div class="filter-container flex flex-wrap gap-4 items-center">
-        <div class="flex items-center space-x-2">
-          <span class="text-sm font-medium text-gray-700">群聊：</span>
-          <el-select v-model="filterGroupId"
-                     placeholder="全部"
-                     clearable
-                     size="small"
-                     class="w-64">
-            <el-option v-for="group in groups"
-                       :key="group.groupId"
-                       :label="group.name"
-                       :value="group.groupId" />
-          </el-select>
+      <div class="filter-container space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-700">群聊：</span>
+            <el-select v-model="filterGroupId"
+                       placeholder="全部"
+                       clearable
+                       size="small"
+                       class="w-64">
+              <el-option v-for="group in groups"
+                         :key="group.groupId"
+                         :label="group.name"
+                         :value="group.groupId" />
+            </el-select>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-700">包含撤回消息：</span>
+            <el-switch v-model="filterIncludeRecalled"
+                       size="small" />
+          </div>
+
+          <div class="flex items-center space-x-2 flex-1">
+            <span class="text-sm font-medium text-gray-700">搜索：</span>
+            <el-input v-model="filterKeyword"
+                      placeholder="消息内容/用户名/用户ID"
+                      clearable
+                      size="small"
+                      prefix-icon="Search"
+                      class="w-full"
+                      @keydown.enter="handleSearch" />
+          </div>
         </div>
 
-        <div class="flex items-center space-x-2">
-          <span class="text-sm font-medium text-gray-700">包含撤回消息：</span>
-          <el-switch v-model="filterIncludeRecalled"
-                     size="small" />
-        </div>
-
-        <div class="flex items-center space-x-2 flex-1 md:flex-none">
-          <span class="text-sm font-medium text-gray-700">搜索：</span>
-          <el-input v-model="filterKeyword"
-                    placeholder="消息内容/用户名/用户ID"
-                    clearable
-                    size="small"
-                    prefix-icon="Search"
-                    class="w-full md:w-64"
-                    @keydown.enter="handleSearch" />
+        <div class="flex justify-end space-x-2">
           <el-button type="primary"
                      size="small"
-                     class="ml-2"
                      @click="handleSearch">
             搜索
           </el-button>
           <el-button size="small"
-                     class="ml-2"
                      @click="handleReset">
             重置
           </el-button>

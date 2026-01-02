@@ -1,56 +1,59 @@
-# 基础镜像：.NET运行时
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
-USER $APP_UID
-WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
-
-# Node.js构建环境
-FROM node:20-alpine AS node-build
+############################
+# 1. 前端构建（Vue）
+############################
+FROM node:20-alpine AS frontend-build
 WORKDIR /client
 
-# 复制前端项目文件
-COPY ["backmanager.client/package.json", "backmanager.client/package-lock.json*", "./"]
-# 安装前端依赖，使用缓存
+# 先只复制 package.json 以利用缓存
+COPY backmanager.client/package*.json ./
 RUN npm ci --no-audit --no-fund
 
-# .NET构建环境
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-ARG BUILD_CONFIGURATION=Release
+# 复制前端所有源码并构建
+COPY backmanager.client/ .
+RUN npm run build
+
+
+############################
+# 2. 后端构建（ASP.NET Core）
+############################
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS backend-build
 WORKDIR /src
 
-# 复制后端项目文件
-COPY ["BackManager/BackManager.Server/BackManager.Server.csproj", "BackManager/BackManager.Server/"]
-COPY ["backmanager.client/backmanager.client.esproj", "backmanager.client/"]
+# 复制 csproj 并还原依赖
+COPY BackManager.Server/*.csproj ./BackManager.Server/
+RUN dotnet restore BackManager.Server/BackManager.Server.csproj
 
-# 恢复.NET依赖
-RUN dotnet restore "./BackManager/BackManager.Server/BackManager.Server.csproj"
+# 复制后端所有源码
+COPY BackManager.Server/ ./BackManager.Server/
 
-# 复制前端构建产物
-COPY --from=node-build /client/node_modules /src/backmanager.client/node_modules
-
-# 复制所有项目文件
-COPY . .
-
-# 构建后端项目
-WORKDIR "/src/BackManager/BackManager.Server"
-RUN dotnet build "./BackManager.Server.csproj" -c $BUILD_CONFIGURATION -o /app/build --verbosity minimal
+# 将前端构建产物复制到后端的 wwwroot 目录
+# 注意：这里确保目标路径存在
+COPY --from=frontend-build /client/dist ./BackManager.Server/wwwroot
 
 # 发布项目
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./BackManager.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false --self-contained false --verbosity minimal
+# 修改点：移除了 --self-contained，因为运行时镜像里已经有环境了
+# 修改点：使用 -p:UseAppHost=false 生成纯 DLL，适配容器启动
+RUN dotnet publish BackManager.Server/BackManager.Server.csproj \
+    -c Release \
+    -o /app/publish \
+    --no-restore \
+    -p:UseAppHost=false
 
-# 最终生产镜像
-FROM base AS final
+
+############################
+# 3. 运行时镜像
+############################
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine
 WORKDIR /app
 
-# 复制发布产物
-COPY --from=publish /app/publish .
+# 从构建阶段复制发布的文件
+COPY --from=backend-build /app/publish .
 
-# 设置环境变量
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=true
+# 建议监听 80 端口，或者保持你原来的 8081
+ENV ASPNETCORE_URLS=http://+:8081
 
-# 启动应用
+EXPOSE 8081
+
+# 因为上面使用了 UseAppHost=false，这里直接运行 dll
 ENTRYPOINT ["dotnet", "BackManager.Server.dll"]

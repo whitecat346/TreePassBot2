@@ -10,6 +10,7 @@ public interface IBotApi
 
     Task<MemberInfo?> GetMemberInfoAsync(ulong memberId);
     Task<List<MemberInfo>?> GetGroupMemberListAsync();
+    Task<List<MemberInfo>?> GetGroupMemberListAsync(ulong groupId);
     Task WithdrawMessageAsync(long messageId);
     Task KickMemberAsync(ulong memberId, bool rejectRequest = false);
     Task<List<Message>?> GetForwardMessageAsync(string forwardId);
@@ -19,4 +20,5 @@ public interface IBotApi
     Task RejectAuditAsync(ulong targetUserId);
     Task AddAuditRequestAsync(ulong targetUserId);
     Task RemoveAuditRequestAsync(ulong targetUserId);
+    Task<IReadOnlyList<ulong>> GetAuditListAsync();
 }

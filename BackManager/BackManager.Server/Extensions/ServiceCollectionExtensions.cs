@@ -19,6 +19,12 @@ public static class ServiceCollectionExtensions
     /// <returns>服务集合</returns>
     public static IServiceCollection AddBotServices(this IServiceCollection services, IConfiguration configuration)
     {
+        var onebotConnStr = configuration.GetSection("Bot:ForwardWebSocket:Url").Value;
+        if (string.IsNullOrEmpty(onebotConnStr))
+        {
+            throw new InvalidDataException("Unknown onebot connection url");
+        }
+
         var connString = configuration.GetConnectionString("DefaultConnection");
 
         // skip aspire default connection string
