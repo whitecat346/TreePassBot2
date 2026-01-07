@@ -93,6 +93,61 @@ public partial class AuditManagerService(
         }
     }
 
+    public async Task<bool> RegenerateVerificationCodeAsync(Guid auditId)
+    {
+        using var scope = scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
+        var audit = await GetAuditRequestAsync(auditId, db).ConfigureAwait(false);
+        if (audit is null)
+        {
+            LogAuditNotFound(logger, auditId.ToString());
+            return false;
+        }
+
+        var newCode = VerificationCodeGenerator.GenerateNumericCode(10);
+        audit.VerificationCode = newCode;
+        db.Update(audit);
+        await db.SaveChangesAsync().ConfigureAwait(false);
+
+        await SendNotificationAsync(audit, AuditStatus.Approved, newCode).ConfigureAwait(false);
+
+        return true;
+    }
+
+    public async Task<bool> ResetAuditRequestsAsync(Guid auditId)
+    {
+        using var scope = scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
+        var audit = await GetAuditRequestAsync(auditId, db).ConfigureAwait(false);
+        if (audit is null)
+        {
+            LogAuditNotFound(logger, auditId.ToString());
+            return false;
+        }
+
+        audit.Status = AuditStatus.Pending;
+        audit.IsJoinedGroup = false;
+        audit.VerificationCode = string.Empty;
+
+        db.Update(audit);
+
+        await db.SaveChangesAsync().ConfigureAwait(false);
+        return true;
+    }
+
+    public async Task<bool> IsJoinedGroupAsync(Guid auditId)
+    {
+        using var scope = scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<BotDbContext>();
+        var auditRequest = await GetAuditRequestAsync(auditId, db).ConfigureAwait(false);
+        if (auditRequest == null)
+        {
+            LogAuditNotFound(logger, auditId.ToString());
+            return false;
+        }
+
+        return auditRequest.IsJoinedGroup;
+    }
 
     public async Task<(bool IsAllowed, string Message)> CheckVerificationCodeAsync(
         ulong userId, string verificationCode)

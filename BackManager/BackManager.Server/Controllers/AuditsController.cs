@@ -123,6 +123,97 @@ public partial class AuditsController(
         }
     }
 
+    /// <summary>
+    /// 拒绝审核
+    /// </summary>
+    /// <param name="auditId">审核ID</param>
+    /// <returns>操作结果</returns>
+    [HttpPost("${auditId}/reset")]
+    public async Task<IActionResult> ResetAudit(string auditId)
+    {
+        try
+        {
+            if (!Guid.TryParse(auditId, out var id))
+            {
+                return BadRequest(ApiResponse<object>.Error("无效的审核ID"));
+            }
+
+            var isSuccess = await auditManagerService.ResetAuditRequestsAsync(id).ConfigureAwait(false);
+            if (!isSuccess)
+            {
+                return NotFound(ApiResponse<object>.Error("审核记录不存在"));
+            }
+
+            return Ok(ApiResponse<object>.Ok(null, $"审核 {auditId} 已重置"));
+        }
+        catch (Exception ex)
+        {
+            LogFailedToRejectAuditError(logger, ex.Message);
+            return StatusCode(500, ApiResponse<object>.Error($"重置审核失败: {ex.Message}"));
+        }
+    }
+
+    /// <summary>
+    /// 拒绝审核
+    /// </summary>
+    /// <param name="auditId">审核ID</param>
+    /// <returns>操作结果</returns>
+    [HttpPost("${auditId}/regenerate-code")]
+    public async Task<IActionResult> RegeneratedVerificationCode(string auditId)
+    {
+        try
+        {
+            if (!Guid.TryParse(auditId, out var id))
+            {
+                return BadRequest(ApiResponse<object>.Error("无效的审核ID"));
+            }
+
+            var isSuccess = await auditManagerService.RegenerateVerificationCodeAsync(id).ConfigureAwait(false);
+            if (!isSuccess)
+            {
+                return NotFound(ApiResponse<object>.Error("审核记录不存在"));
+            }
+
+            return Ok(ApiResponse<object>.Ok(null, $"审核 {auditId} 已重新生成验证码"));
+        }
+        catch (Exception ex)
+        {
+            LogFailedToRejectAuditError(logger, ex.Message);
+            return StatusCode(500, ApiResponse<object>.Error($"重新生成验证码失败: {ex.Message}"));
+        }
+    }
+
+    /// <summary>
+    /// 拒绝审核
+    /// </summary>
+    /// <param name="auditId">审核ID</param>
+    /// <returns>操作结果</returns>
+    [HttpPost("${auditId}/enteredGroup")]
+    public async Task<IActionResult> CheckEnteredGroup(string auditId)
+    {
+        try
+        {
+            if (!Guid.TryParse(auditId, out var id))
+            {
+                return BadRequest(ApiResponse<object>.Error("无效的审核ID"));
+            }
+
+            var isJoined = await auditManagerService.IsJoinedGroupAsync(id).ConfigureAwait(false);
+            if (!isJoined)
+            {
+                return NotFound(ApiResponse<object>.Error("审核记录不存在"));
+            }
+
+            return Ok(ApiResponse<object>.Ok(new { EnteredGroup = isJoined }, $"获取审核 {auditId} 状态成功"));
+        }
+        catch (Exception ex)
+        {
+            LogFailedToRejectAuditError(logger, ex.Message);
+            return StatusCode(500, ApiResponse<object>.Error($"获取状态失败: {ex.Message}"));
+        }
+    }
+
+
     [LoggerMessage(LogLevel.Error, "Failed to get audit records: {error}")]
     static partial void LogFailedToGetAuditRecordsError(ILogger<AuditsController> logger, string error);
 

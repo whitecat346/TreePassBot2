@@ -153,8 +153,8 @@
               <el-button v-if="row.status !== 'Pending'"
                          type="info"
                          size="small"
-                         @click="handleResendCode(row)">
-                重新发送验证码
+                         @click="handleRegenerateCode(row)">
+                重新生成验证码
               </el-button>
 
               <!-- 查看详情按钮 -->
@@ -245,8 +245,8 @@
           <el-button v-if="selectedAudit && selectedAudit.status !== 'Pending'"
                      type="info"
                      size="small"
-                     @click="handleResendCode(selectedAudit)">
-            重新发送验证码
+                     @click="handleRegenerateCode(selectedAudit)">
+            重新生成验证码
           </el-button>
 
           <el-button @click="handleCloseDetail">关闭</el-button>
@@ -265,7 +265,7 @@ import {
   approveAudit,
   rejectAudit,
   resetAuditStatus,
-  resendVerificationCode,
+  regenerateVerificationCode,
   getEnteredGroupStatus,
   type AuditRecord,
   type AuditStatus
@@ -446,19 +446,19 @@ const handleResetAudit = async (audit: AuditRecord) => {
 };
 
 // 处理重新发送验证码
-const handleResendCode = async (audit: AuditRecord) => {
+const handleRegenerateCode = async (audit: AuditRecord) => {
   try {
-    const response = await resendVerificationCode(audit.id);
+    const response = await regenerateVerificationCode(audit.id);
     if (response.data.success) {
-      ElMessage.success('验证码重新发送成功');
+      ElMessage.success('验证码重新生成成功');
       fetchAuditRecords(); // 刷新列表获取新的验证码
     } else {
       // 当API返回success为false时，抛出错误
-      throw new Error(response.data.message || '验证码重新发送失败');
+      throw new Error(response.data.message || '验证码重新生成失败');
     }
   } catch (error) {
-    ElMessage.error('验证码重新发送失败');
-    console.error('验证码重新发送失败:', error);
+    ElMessage.error('验证码重新生成失败');
+    console.error('验证码重新生成失败:', error);
   }
 };
 

@@ -227,7 +227,7 @@ export const getAuditRecords = () => apiClient.get<ApiResponse<AuditRecord[]>>('
 export const approveAudit = (auditId: string) => apiClient.post<ApiResponse<void>>(`/audits/${auditId}/approve`);
 export const rejectAudit = (auditId: string) => apiClient.post<ApiResponse<void>>(`/audits/${auditId}/reject`);
 export const resetAuditStatus = (auditId: string) => apiClient.post<ApiResponse<void>>(`/audits/${auditId}/reset`);
-export const resendVerificationCode = (auditId: string) => apiClient.post<ApiResponse<void>>(`/audits/${auditId}/resend-code`);
+export const regenerateVerificationCode = (auditId: string) => apiClient.post<ApiResponse<void>>(`/audits/${auditId}/regenerate-code`);
 export const getEnteredGroupStatus = (auditId: string) => apiClient.get<ApiResponse<{ enteredGroup: boolean }>>(`/audits/${auditId}/entered-group`);
 export const updateAuditRecordStatus = (auditId: string) => apiClient.get<ApiResponse<AuditRecord>>(`/audits/${auditId}`);
 
