@@ -274,33 +274,33 @@ onUnmounted(() => {
   .base-table-container {
     width: 100%;
   }
-
+  
   /* 优化表格在移动端的显示 */
   @media (max-width: 640px) {
     table {
       font-size: 12px;
     }
-
+    
     /* 确保表格容器可以水平滚动 */
     .overflow-x-auto {
       -webkit-overflow-scrolling: touch;
       scrollbar-width: thin;
     }
-
+    
     /* 优化滚动条样式 */
     .overflow-x-auto::-webkit-scrollbar {
       height: 4px;
     }
-
+    
     .overflow-x-auto::-webkit-scrollbar-track {
       background: #f1f1f1;
     }
-
+    
     .overflow-x-auto::-webkit-scrollbar-thumb {
       background: #888;
       border-radius: 2px;
     }
-
+    
     .overflow-x-auto::-webkit-scrollbar-thumb:hover {
       background: #555;
     }

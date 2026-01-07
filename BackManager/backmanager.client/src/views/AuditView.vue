@@ -122,7 +122,7 @@
         <el-table-column prop="processedBy" label="处理者" width="120" align="center" />
 
         <!-- 操作列 -->
-        <el-table-column label="操作" width="180" align="center">
+        <el-table-column label="操作" width="300" align="center">
           <template #default="{ row }">
             <div class="flex space-x-2">
               <!-- 审核通过按钮 -->
@@ -139,6 +139,22 @@
                          size="small"
                          @click="handleReject(row)">
                 拒绝
+              </el-button>
+
+              <!-- 重置审核状态按钮 -->
+              <el-button v-if="row.status !== 'Pending'"
+                         type="warning"
+                         size="small"
+                         @click="handleResetAudit(row)">
+                重置审核状态
+              </el-button>
+
+              <!-- 重新发送验证码按钮 -->
+              <el-button v-if="row.status !== 'Pending'"
+                         type="info"
+                         size="small"
+                         @click="handleResendCode(row)">
+                重新发送验证码
               </el-button>
 
               <!-- 查看详情按钮 -->
@@ -217,6 +233,22 @@
 
       <template #footer>
         <span class="dialog-footer">
+          <!-- 重置审核状态按钮 -->
+          <el-button v-if="selectedAudit && selectedAudit.status !== 'Pending'"
+                     type="warning"
+                     size="small"
+                     @click="handleResetAudit(selectedAudit)">
+            重置审核状态
+          </el-button>
+
+          <!-- 重新发送验证码按钮 -->
+          <el-button v-if="selectedAudit && selectedAudit.status !== 'Pending'"
+                     type="info"
+                     size="small"
+                     @click="handleResendCode(selectedAudit)">
+            重新发送验证码
+          </el-button>
+
           <el-button @click="handleCloseDetail">关闭</el-button>
         </span>
       </template>
@@ -227,11 +259,14 @@
 <script setup lang="ts">defineOptions({
   name: 'AuditView'
 });
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import {
   getAuditRecords,
   approveAudit,
   rejectAudit,
+  resetAuditStatus,
+  resendVerificationCode,
+  getEnteredGroupStatus,
   type AuditRecord,
   type AuditStatus
 } from '@/services/api';
@@ -248,6 +283,7 @@ const loading = ref(true);
 const currentPage = ref(1);
 const pageSize = ref(20);
 const auditTotal = ref(0);
+let checkStatusInterval: number | null = null;
 
 // 筛选条件
 const filterStatus = ref<AuditStatus | ''>('');
@@ -392,6 +428,40 @@ const handleReject = async (audit: AuditRecord) => {
   }
 };
 
+// 处理重置审核状态
+const handleResetAudit = async (audit: AuditRecord) => {
+  try {
+    const response = await resetAuditStatus(audit.id);
+    if (response.data.success) {
+      ElMessage.success('审核状态重置成功');
+      fetchAuditRecords(); // 刷新列表
+    } else {
+      // 当API返回success为false时，抛出错误
+      throw new Error(response.data.message || '审核状态重置失败');
+    }
+  } catch (error) {
+    ElMessage.error('审核状态重置失败');
+    console.error('审核状态重置失败:', error);
+  }
+};
+
+// 处理重新发送验证码
+const handleResendCode = async (audit: AuditRecord) => {
+  try {
+    const response = await resendVerificationCode(audit.id);
+    if (response.data.success) {
+      ElMessage.success('验证码重新发送成功');
+      fetchAuditRecords(); // 刷新列表获取新的验证码
+    } else {
+      // 当API返回success为false时，抛出错误
+      throw new Error(response.data.message || '验证码重新发送失败');
+    }
+  } catch (error) {
+    ElMessage.error('验证码重新发送失败');
+    console.error('验证码重新发送失败:', error);
+  }
+};
+
 // 查看审核详情
 const handleViewDetail = (audit: AuditRecord) => {
   selectedAudit.value = audit;
@@ -423,7 +493,45 @@ const handlePageChange = (page: number) => {
 // 组件挂载时初始化
 onMounted(() => {
   fetchAuditRecords();
-});</script>
+  // 启动定期检查入群状态，每30秒检查一次
+  checkStatusInterval = window.setInterval(() => {
+    checkEnteredGroupStatus();
+  }, 30000);
+});
+
+// 组件卸载时清除定时器
+onUnmounted(() => {
+  if (checkStatusInterval) {
+    window.clearInterval(checkStatusInterval);
+    checkStatusInterval = null;
+  }
+});
+
+// 检查入群状态
+const checkEnteredGroupStatus = async () => {
+  try {
+    // 只检查已审核的记录
+    const approvedAudits = audits.value.filter(audit => audit.status === 'Approved');
+
+    for (const audit of approvedAudits) {
+      const response = await getEnteredGroupStatus(audit.id);
+      if (response.data.success) {
+        // 更新本地记录的入群状态
+        const index = audits.value.findIndex(item => item.id === audit.id);
+        if (index !== -1 && audits.value[index]) {
+          audits.value[index].enteredGroup = response.data.data.enteredGroup;
+        }
+        // 如果当前详情弹窗显示的是这条记录，也更新弹窗中的状态
+        if (selectedAudit.value && selectedAudit.value.id === audit.id) {
+          selectedAudit.value.enteredGroup = response.data.data.enteredGroup;
+        }
+      }
+    }
+  } catch (error) {
+    console.error('检查入群状态失败:', error);
+    // 这里不显示错误提示，避免频繁弹窗影响用户体验
+  }
+};</script>
 
 <style scoped>
   .audit-view-container {
