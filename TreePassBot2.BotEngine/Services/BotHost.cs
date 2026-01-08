@@ -30,8 +30,8 @@ public class BotHost(
 
         var pluginDir = _config.PluginDir;
         await LoadPluginsAsync(pluginDir).ConfigureAwait(false);
-        await communicationService.ConnectAsync().ConfigureAwait(false);
-        await userManage.InitInfoAsync().ConfigureAwait(false);
+        //await communicationService.ConnectAsync().ConfigureAwait(false);
+        //await userManage.InitInfoAsync().ConfigureAwait(false);
         router.StartRoute();
 
         runtimeInfo.StartTime = DateTimeOffset.UtcNow;

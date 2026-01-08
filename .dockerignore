@@ -22,6 +22,8 @@
 **/obj
 **/secrets.dev.yaml
 **/values.dev.yaml
+**/dist
+**/BackManager/backmanager.client/dist
 LICENSE
 README.md
 !**/.gitignore

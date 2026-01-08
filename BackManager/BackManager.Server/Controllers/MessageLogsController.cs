@@ -106,7 +106,7 @@ public partial class MessageLogsController(
                 items = logs,
                 hasMore = hasMore,
                 nextCursor = hasMore ? logs[^1].Id : string.Empty,
-                total = await dbContext.MessageLogs.CountAsync().ConfigureAwait(false)
+                total = logs.Count
             };
 
             return Ok(ApiResponse<object>.Ok(response, "获取消息日志成功"));

@@ -1,7 +1,7 @@
 ############################
 # 1. 前端构建（Vue）
 ############################
-FROM node:20-alpine AS frontend-build
+FROM node:25-alpine AS frontend-build
 WORKDIR /src
 
 # 注意：路径变成了 BackManager/backmanager.client/...
@@ -13,6 +13,14 @@ RUN npm ci --no-audit --no-fund
 
 # 复制前端源码（注意上下文路径）
 COPY BackManager/backmanager.client/ .
+
+# === 调试插入点 ===
+# 列出文件确保目录正确
+RUN ls -R src/views
+# 强制搜索新代码。如果 grep 找不到该字符串，构建会报错停止。
+RUN grep -r "handleRegenerateCode" src/ || (echo "❌ 致命错误：新代码未发现！" && exit 1)
+# =================
+
 RUN npm run build
 
 

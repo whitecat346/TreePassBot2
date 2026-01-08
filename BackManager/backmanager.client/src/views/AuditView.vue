@@ -122,9 +122,17 @@
         <el-table-column prop="processedBy" label="处理者" width="120" align="center" />
 
         <!-- 操作列 -->
-        <el-table-column label="操作" width="300" align="center">
+        <el-table-column label="操作" min-width="350" align="center">
           <template #default="{ row }">
-            <div class="flex space-x-2">
+            <div class="flex flex-wrap justify-center gap-2">
+              <!-- 调试信息：显示当前状态 -->
+              <!-- <div class="text-xs text-gray-500 mb-1 w-full text-center" v-if="import.meta.env.DEV">
+                状态: {{ row.status }} |
+                是否Pending: {{ row.status === 'Pending' }} |
+                是否非Pending: {{ row.status !== 'Pending' }} |
+                是否Approved: {{ row.status === 'Approved' }}
+              </div> -->
+
               <!-- 审核通过按钮 -->
               <el-button v-if="row.status === 'Pending'"
                          type="success"
@@ -150,7 +158,7 @@
               </el-button>
 
               <!-- 重新发送验证码按钮 -->
-              <el-button v-if="row.status !== 'Pending'"
+              <el-button v-if="row.status !== 'Pending' && row.status === 'Approved'"
                          type="info"
                          size="small"
                          @click="handleRegenerateCode(row)">
@@ -233,23 +241,34 @@
 
       <template #footer>
         <span class="dialog-footer">
-          <!-- 重置审核状态按钮 -->
-          <el-button v-if="selectedAudit && selectedAudit.status !== 'Pending'"
-                     type="warning"
-                     size="small"
-                     @click="handleResetAudit(selectedAudit)">
-            重置审核状态
-          </el-button>
+          <!-- 调试信息：显示当前状态 -->
+          <div class="text-xs text-gray-500 mb-2 w-full text-center">
+            详情弹窗状态: {{ selectedAudit?.status }} |
+            是否Pending: {{ selectedAudit?.status === 'Pending' }} |
+            是否非Pending: {{ selectedAudit?.status !== 'Pending' }} |
+            是否Approved: {{ selectedAudit?.status === 'Approved' }}
+          </div>
 
-          <!-- 重新发送验证码按钮 -->
-          <el-button v-if="selectedAudit && selectedAudit.status !== 'Pending'"
-                     type="info"
-                     size="small"
-                     @click="handleRegenerateCode(selectedAudit)">
-            重新生成验证码
-          </el-button>
+          <div class="flex flex-wrap justify-center gap-2">
+            <!-- 重置审核状态按钮 -->
+            <el-button v-if="selectedAudit && selectedAudit.status !== 'Pending'"
+                       type="warning"
+                       size="small"
+                       @click="handleResetAudit(selectedAudit)">
+              重置审核状态
+            </el-button>
 
-          <el-button @click="handleCloseDetail">关闭</el-button>
+            <!-- 重新发送验证码按钮 -->
+            <el-button v-if="selectedAudit && selectedAudit.status !== 'Pending'"
+                       type="info"
+                       size="small"
+                       @click="handleRegenerateCode(selectedAudit)">
+              重新生成验证码
+            </el-button>
+
+            <!-- 关闭按钮 -->
+            <el-button @click="handleCloseDetail">关闭</el-button>
+          </div>
         </span>
       </template>
     </el-dialog>
@@ -284,6 +303,17 @@ const currentPage = ref(1);
 const pageSize = ref(20);
 const auditTotal = ref(0);
 let checkStatusInterval: number | null = null;
+
+// 调试模式状态
+const isDebugMode = ref(false);
+const currentDataMode = ref<'real' | 'test'>('real');
+
+// 定义Window接口扩展，支持debug函数
+declare global {
+  interface Window {
+    debug?: () => void;
+  }
+}
 
 // 筛选条件
 const filterStatus = ref<AuditStatus | ''>('');
@@ -348,25 +378,73 @@ const getAuditStatusText = (status: AuditStatus) => {
   }
 };
 
+// 预设测试数据
+const getMockAuditData = (): AuditRecord[] => {
+  const now = new Date();
+  return [
+    // Pending状态记录
+    {
+      id: 'pending-1',
+      userId: 'user001',
+      username: '测试用户1',
+      groupId: 'group001',
+      groupName: '测试群组1',
+      status: 'Pending',
+      verificationCode: '123456',
+      enteredGroup: false,
+      createdAt: new Date(now.getTime() - 86400000).toISOString(),
+      processedAt: null,
+      processedBy: null
+    },
+    // Approved状态记录
+    {
+      id: 'approved-1',
+      userId: 'user002',
+      username: '测试用户2',
+      groupId: 'group002',
+      groupName: '测试群组2',
+      status: 'Approved',
+      verificationCode: '789012',
+      enteredGroup: true,
+      createdAt: new Date(now.getTime() - 86400000 * 2).toISOString(),
+      processedAt: new Date(now.getTime() - 3600000).toISOString(),
+      processedBy: 'admin'
+    },
+    // Rejected状态记录
+    {
+      id: 'rejected-1',
+      userId: 'user003',
+      username: '测试用户3',
+      groupId: 'group003',
+      groupName: '测试群组3',
+      status: 'Rejected',
+      verificationCode: null,
+      enteredGroup: false,
+      createdAt: new Date(now.getTime() - 86400000 * 3).toISOString(),
+      processedAt: new Date(now.getTime() - 86400000 * 4).toISOString(),
+      processedBy: 'admin'
+    }
+  ];
+};
+
 // 获取审核记录列表
 const fetchAuditRecords = async () => {
   try {
     loading.value = true;
 
-    // 注意：这里的API调用方式需要根据实际后端接口调整
-    // 实际调用时需要传递筛选和分页参数
-    // const params = {
-    //   status: filterStatus.value,
-    //   enteredGroup: filterEnteredGroup.value,
-    //   keyword: filterKeyword.value,
-    //   page: currentPage.value,
-    //   pageSize: pageSize.value
-    // };
+    // 检查是否为调试模式且仅在开发环境下生效
+    if (isDebugMode.value && import.meta.env.DEV) {
+      console.log('🔧 调试模式：使用预设测试数据');
+      audits.value = getMockAuditData();
+      auditTotal.value = audits.value.length;
+      ElMessage.success('已切换到测试数据模式');
+      return;
+    }
 
     const response = await getAuditRecords();
     if (response.data.success) {
       audits.value = response.data.data;
-      auditTotal.value = response.data.data.length; // 实际项目中应该从API返回的total字段获取
+      auditTotal.value = response.data.data.length;
     } else {
       // 当API返回success为false时，抛出错误
       throw new Error(response.data.message || '获取审核记录失败');
@@ -445,7 +523,7 @@ const handleResetAudit = async (audit: AuditRecord) => {
   }
 };
 
-// 处理重新发送验证码
+// 处理重新生成验证码
 const handleRegenerateCode = async (audit: AuditRecord) => {
   try {
     const response = await regenerateVerificationCode(audit.id);
@@ -493,17 +571,68 @@ const handlePageChange = (page: number) => {
 // 组件挂载时初始化
 onMounted(() => {
   fetchAuditRecords();
+
+  // 显示当前环境信息（仅在开发环境下显示调试提示）
+  if (import.meta.env.DEV) {
+    console.log('🔧 当前环境：开发模式');
+    console.log('💡 调试功能已启用');
+    console.log('📝 使用方法：在控制台输入"debug()"命令切换测试数据');
+  } else {
+    console.log('🔒 当前环境：生产模式');
+    console.log('⚠️  调试功能已禁用');
+  }
+
   // 启动定期检查入群状态，每30秒检查一次
   checkStatusInterval = window.setInterval(() => {
     checkEnteredGroupStatus();
   }, 30000);
+
+  // 添加控制台命令（仅在开发环境下生效）
+  if (import.meta.env.DEV) {
+    // 将调试函数挂载到window对象，让用户可以直接在控制台调用
+    window.debug = () => {
+      // 切换到测试数据模式
+      if (!isDebugMode.value) {
+        isDebugMode.value = true;
+        currentDataMode.value = 'test';
+        console.log('🔧 已切换到测试数据模式');
+        console.log('📊 测试数据包含：');
+        console.log('  - Pending状态记录：1条');
+        console.log('  - Approved状态记录：1条');
+        console.log('  - Rejected状态记录：1条');
+        console.log('💡 再次输入"debug()"命令可切换回真实数据模式');
+        ElMessage.success('已切换到测试数据模式');
+        // 刷新数据
+        fetchAuditRecords();
+      } else {
+        // 切换回真实数据模式
+        isDebugMode.value = false;
+        currentDataMode.value = 'real';
+        console.log('🔧 已切换回真实数据模式');
+        console.log('💡 再次输入"debug()"命令可切换到测试数据模式');
+        ElMessage.success('已切换回真实数据模式');
+        // 刷新数据
+        fetchAuditRecords();
+      }
+    };
+
+    console.log('🔧 开发者调试工具已启用');
+    console.log('💡 使用方法：在控制台输入"debug()"命令切换测试数据');
+  }
 });
 
-// 组件卸载时清除定时器
+// 组件卸载时清除定时器和调试函数
 onUnmounted(() => {
+  // 清除定时器
   if (checkStatusInterval) {
     window.clearInterval(checkStatusInterval);
     checkStatusInterval = null;
+  }
+
+  // 清除window对象上的debug函数（仅在开发环境中生效）
+  if (import.meta.env.DEV) {
+    delete window.debug;
+    console.log('🔧 开发者调试工具已禁用');
   }
 });
 
